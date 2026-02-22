@@ -50,6 +50,7 @@ PageTable::PageTable() {
 }
 
 void PageTable::load() {
+  current_page_table = this;
   write_cr3((unsigned long)page_directory);
   Console::puts("Loaded page table\n");
 }
@@ -60,5 +61,38 @@ void PageTable::enable_paging() {
 }
 
 void PageTable::handle_fault(REGS *_r) {
-  Console::puts("handled page fault\n");
+  unsigned long fault_address = read_cr2();
+
+  unsigned long dir_idx = fault_address >> 22;
+  unsigned long pt_idx = (fault_address << 10) >> 22;
+  unsigned long offset = fault_address & ((1 << 12) - 1);
+
+  unsigned long pde_entry = current_page_table->page_directory[dir_idx];
+
+  unsigned long *page_table;
+  unsigned long pte_entry;
+  if ((pde_entry & 1) == 0) {
+    unsigned long new_frame = kernel_mem_pool->get_frames(1);
+    page_table = (unsigned long *)(new_frame * 4 KB);
+
+    for (int i = 0; i < 1024; i++) {
+      // Enabling R/W bit and invalid bit
+      page_table[i] = 0 | 2;
+    }
+    current_page_table->page_directory[dir_idx] = (new_frame << 12) | 3;
+    pte_entry = 0 | 2;
+  } else {
+    unsigned long pt_frame = pde_entry >> 12;
+    page_table = (unsigned long *)(pt_frame * 4 KB);
+    pte_entry = page_table[pt_idx];
+  }
+
+  if (pte_entry & 1) {
+    Console::puts("A valid page table from a valid page directroy throws "
+                  "handle fault error\n");
+    assert(false);
+  } else {
+    unsigned long new_frame = process_mem_pool->get_frames(1);
+    page_table[pt_idx] = (new_frame << 12) | 3;
+  }
 }
