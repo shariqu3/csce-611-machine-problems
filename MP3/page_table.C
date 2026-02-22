@@ -57,7 +57,7 @@ void PageTable::load() {
 
 void PageTable::enable_paging() {
   write_cr0(read_cr0() | 0x80000000);
-  Console::puts("Enabled paging. NOT!\n");
+  Console::puts("Enabled paging.\n");
 }
 
 void PageTable::handle_fault(REGS *_r) {
