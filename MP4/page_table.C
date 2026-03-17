@@ -182,6 +182,14 @@ void PageTable::handle_fault(REGS *_r) {
     page_table[pt_idx] = (new_frame << 12) | 3;
   }
 }
+unsigned long *PageTable::PDE_address(unsigned long addr) {
+  assert(false);
+  return nullptr;
+}
+unsigned long *PageTable::PTE_address(unsigned long addr) {
+  assert(false);
+  return nullptr;
+}
 
 void PageTable::register_pool(VMPool *_vm_pool) {
   assert(false);

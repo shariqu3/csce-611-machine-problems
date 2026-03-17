@@ -93,6 +93,9 @@ public:
 
   // -- NEW IN MP4
 
+  unsigned long *PDE_address(unsigned long addr);
+  unsigned long *PTE_address(unsigned long addr);
+
   void register_pool(VMPool *_vm_pool);
   /* Register a virtual memory pool with the page table. */
 
