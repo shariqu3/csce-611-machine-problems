@@ -53,8 +53,11 @@ private:
   ContFramePool *frame_pool;
   PageTable *page_table;
 
-  Region allocated[256];
-  Region free_regions[256];
+  Region *allocated;
+  Region *free_regions;
+
+  int n_free;
+  int n_alloc;
 
 public:
   VMPool(unsigned long _base_address, unsigned long _size,
