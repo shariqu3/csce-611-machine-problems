@@ -69,7 +69,7 @@ PageTable::PageTable() {
   page_directory = (unsigned long *)(frame * 4 KB);
 
   // Initialize first page table for direct mapping of shared size
-  frame = kernel_mem_pool->get_frames(1);
+  frame = process_mem_pool->get_frames(1);
   unsigned long address = 0;
 
   unsigned long *page_table = (unsigned long *)(frame * 4 KB);
@@ -85,6 +85,7 @@ PageTable::PageTable() {
     // Marking them as read write and invalid
     page_directory[i] = 0 | 2;
   }
+  page_directory[1023] = (unsigned long)page_directory | 3;
 
   Console::puts("Constructed Page Table object\n");
 }
@@ -148,47 +149,43 @@ void PageTable::enable_paging() {
  */
 void PageTable::handle_fault(REGS *_r) {
   unsigned long fault_address = read_cr2();
-
   unsigned long dir_idx = fault_address >> 22;
-  unsigned long pt_idx = (fault_address << 10) >> 22;
-  unsigned long offset = fault_address & ((1 << 12) - 1);
+  unsigned long *pde = current_page_table->PDE_address(fault_address);
 
-  unsigned long pde_entry = current_page_table->page_directory[dir_idx];
+  if ((*pde & 1) == 0) {
+    unsigned long new_frame = process_mem_pool->get_frames(1);
+    assert(new_frame != 0);
+    *pde = (new_frame * 4 KB) | 3;
 
-  unsigned long *page_table;
-  unsigned long pte_entry;
-  if ((pde_entry & 1) == 0) {
-    unsigned long new_frame = kernel_mem_pool->get_frames(1);
-    page_table = (unsigned long *)(new_frame * 4 KB);
-
+    unsigned long *new_pt = (unsigned long *)(0xFFC00000 + (dir_idx << 12));
     for (int i = 0; i < 1024; i++) {
       // Enabling R/W bit and invalid bit
-      page_table[i] = 0 | 2;
+      new_pt[i] = 0 | 2;
     }
-    current_page_table->page_directory[dir_idx] = (new_frame << 12) | 3;
-    pte_entry = 0 | 2;
-  } else {
-    unsigned long pt_frame = pde_entry >> 12;
-    page_table = (unsigned long *)(pt_frame * 4 KB);
-    pte_entry = page_table[pt_idx];
   }
 
-  if (pte_entry & 1) {
+  unsigned long *pte = current_page_table->PTE_address(fault_address);
+
+  if (*pte & 1) {
     Console::puts("A valid page table from a valid page directroy throws "
                   "handle fault error\n");
     assert(false);
   } else {
     unsigned long new_frame = process_mem_pool->get_frames(1);
-    page_table[pt_idx] = (new_frame << 12) | 3;
+    assert(new_frame != 0);
+    *pte = (new_frame * 4 KB) | 3;
   }
 }
+
 unsigned long *PageTable::PDE_address(unsigned long addr) {
-  assert(false);
-  return nullptr;
+  unsigned long X = addr >> 22;
+  return (unsigned long *)(0xFFFFF000 + (X << 2));
 }
+
 unsigned long *PageTable::PTE_address(unsigned long addr) {
-  assert(false);
-  return nullptr;
+  unsigned long X = addr >> 22;
+  unsigned long Y = (addr << 10) >> 22;
+  return (unsigned long *)(0xFFC00000 + (X << 12) + (Y << 2));
 }
 
 void PageTable::register_pool(VMPool *_vm_pool) {

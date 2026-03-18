@@ -216,6 +216,7 @@ and overload the method handle_exception. */
 
   /* WE TEST JUST THE PAGE TABLE */
   GeneratePageTableMemoryReferences(FAULT_ADDR, NACCESS);
+  Console::puts("Done Testing!\n");
 
 #else
 
