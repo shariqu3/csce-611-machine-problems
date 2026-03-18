@@ -210,7 +210,7 @@ and overload the method handle_exception. */
 
   /* BY DEFAULT WE TEST THE PAGE TABLE IN MAPPED MEMORY!
      (UNCOMMENT THE FOLLOWING LINE TO TEST THE VM Pools! */
-#define _TEST_PAGE_TABLE_
+  // #define _TEST_PAGE_TABLE_
 
 #ifdef _TEST_PAGE_TABLE_
 

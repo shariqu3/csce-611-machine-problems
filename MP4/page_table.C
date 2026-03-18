@@ -64,6 +64,8 @@ void PageTable::init_paging(ContFramePool *_kernel_mem_pool,
  * additional page tables are currently allocated.
  */
 PageTable::PageTable() {
+  n_registered_pools = 0;
+
   // Initialize page directory
   unsigned long frame = kernel_mem_pool->get_frames(1);
   page_directory = (unsigned long *)(frame * 4 KB);
@@ -148,7 +150,24 @@ void PageTable::enable_paging() {
  *           of the fault (not used directly in this implementation).
  */
 void PageTable::handle_fault(REGS *_r) {
+  (void)_r;
   unsigned long fault_address = read_cr2();
+
+  bool legitimate = (fault_address < shared_size);
+  if (!legitimate) {
+    for (unsigned int i = 0; i < current_page_table->n_registered_pools; i++) {
+      if (current_page_table->registered_pools[i]->is_legitimate(fault_address)) {
+        legitimate = true;
+        break;
+      }
+    }
+  }
+
+  if (!legitimate) {
+    Console::puts("SEGMENTATION FAULT: illegitimate memory access\n");
+    abort();
+  }
+
   unsigned long dir_idx = fault_address >> 22;
   unsigned long *pde = current_page_table->PDE_address(fault_address);
 
@@ -189,11 +208,31 @@ unsigned long *PageTable::PTE_address(unsigned long addr) {
 }
 
 void PageTable::register_pool(VMPool *_vm_pool) {
-  assert(false);
+  assert(_vm_pool != nullptr);
+  assert(n_registered_pools < MAX_VM_POOLS);
+  registered_pools[n_registered_pools] = _vm_pool;
+  n_registered_pools++;
   Console::puts("registered VM pool\n");
 }
 
 void PageTable::free_page(unsigned long _page_no) {
-  assert(false);
+  unsigned long page_addr = _page_no * PAGE_SIZE;
+  unsigned long *pde = current_page_table->PDE_address(page_addr);
+  if ((*pde & 1) == 0) {
+  Console::puts("Freeing incorrect page\n");
+    return;
+  }
+
+  unsigned long *pte = current_page_table->PTE_address(page_addr);
+  if ((*pte & 1) == 0) {
+  Console::puts("Freeing incorrect page\n");
+    return;
+  }
+
+  unsigned long frame_no = (*pte & 0xFFFFF000) / PAGE_SIZE;
+  ContFramePool::release_frames(frame_no);
+  *pte = 0 | 2;
+
+  write_cr3(read_cr3());
   Console::puts("freed page\n");
 }
