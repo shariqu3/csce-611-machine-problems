@@ -26,7 +26,6 @@
 /*--------------------------------------------------------------------------*/
 
 #include "cont_frame_pool.H"
-#include "page_table.H"
 #include "utils.H"
 
 /*--------------------------------------------------------------------------*/
@@ -36,6 +35,7 @@
 /* Forward declaration of class PageTable */
 /* We need this to break a circular include sequence. */
 class PageTable;
+#include "page_table.H"
 
 /*--------------------------------------------------------------------------*/
 /* V M  P o o l  */

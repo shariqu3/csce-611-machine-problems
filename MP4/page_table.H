@@ -27,7 +27,6 @@
 #include "cont_frame_pool.H"
 #include "exceptions.H"
 #include "machine.H"
-#include "vm_pool.H"
 
 /*--------------------------------------------------------------------------*/
 /* FORWARDS */
@@ -36,6 +35,7 @@
 /* Forward declaration of class VMPool */
 /* We need this to break a circular include sequence. */
 class VMPool;
+#include "vm_pool.H"
 
 /*--------------------------------------------------------------------------*/
 /* P A G E - T A B L E  */
