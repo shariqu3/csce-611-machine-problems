@@ -71,39 +71,42 @@ VMPool::VMPool(unsigned long _base_address, unsigned long _size,
 }
 
 unsigned long VMPool::allocate(unsigned long _size) {
-  // Rounding up here
-  unsigned long req_pages =
-      (_size + page_table->PAGE_SIZE - 1) / page_table->PAGE_SIZE;
   if (n_alloc >= MAX_REGIONS) {
     Console::puts("Out of memory regions.\n");
     return 0;
   }
+  // Rounding up here
+  unsigned long req_pages =
+      (_size + PageTable::PAGE_SIZE - 1) / PageTable::PAGE_SIZE;
 
-  for (int i = 0; i < n_free; i++) {
+  if (req_pages == 0)
+    return 0;
+
+  for (unsigned long i = 0; i < n_free; i++) {
     if (free_regions[i].n_pages >= req_pages) {
       allocated[n_alloc].base = free_regions[i].base;
       allocated[n_alloc].n_pages = req_pages;
       n_alloc++;
 
       if (free_regions[i].n_pages == req_pages) {
-        if (n_free > 1) {
-          free_regions[i] = free_regions[n_free - 1];
-        }
+        free_regions[i] = free_regions[n_free - 1];
         n_free--;
+        Console::puts("Allocated region of memory.\n");
         return allocated[n_alloc - 1].base;
       }
 
       else {
         free_regions[i].base =
-            free_regions[i].base + req_pages * (page_table->PAGE_SIZE);
+            free_regions[i].base + (req_pages * PageTable::PAGE_SIZE);
         free_regions[i].n_pages -= req_pages;
 
+        Console::puts("Allocated region of memory.\n");
         return allocated[n_alloc - 1].base;
       }
     }
   }
+  Console::puts("Allocated failed.\n");
   return 0;
-  Console::puts("Allocated region of memory.\n");
 }
 
 void VMPool::release(unsigned long _start_address) {
