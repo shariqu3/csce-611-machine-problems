@@ -125,10 +125,12 @@ void VMPool::release(unsigned long _start_address) {
     if (allocated[i].base == _start_address) {
       unsigned long pages = allocated[i].n_pages;
       unsigned long base = allocated[i].base;
-      for (unsigned long i = 0; i < pages; i++) {
-        unsigned long page_no = (base_address / PageTable::PAGE_SIZE) + i;
+
+      for (unsigned long j = 0; j < pages; j++) {
+        unsigned long page_no = (base / PageTable::PAGE_SIZE) + j;
         page_table->free_page(page_no);
       }
+
       free_regions[n_free] = allocated[i];
       allocated[i] = allocated[n_alloc - 1];
       n_alloc--;
@@ -142,6 +144,13 @@ void VMPool::release(unsigned long _start_address) {
 }
 
 bool VMPool::is_legitimate(unsigned long _address) {
-  assert(false);
+  for (unsigned long i = 0; i < n_alloc; i++) {
+    unsigned long first_address = allocated[i].base;
+    unsigned long end =
+        allocated[i].base + (PageTable::PAGE_SIZE * allocated[i].n_pages);
+    if (first_address <= _address && _address < end)
+      return true;
+  }
   Console::puts("Checked whether address is part of an allocated region.\n");
+  return false;
 }

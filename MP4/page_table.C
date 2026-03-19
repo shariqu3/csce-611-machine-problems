@@ -156,7 +156,8 @@ void PageTable::handle_fault(REGS *_r) {
   bool legitimate = (fault_address < shared_size);
   if (!legitimate) {
     for (unsigned int i = 0; i < current_page_table->n_registered_pools; i++) {
-      if (current_page_table->registered_pools[i]->is_legitimate(fault_address)) {
+      if (current_page_table->registered_pools[i]->is_legitimate(
+              fault_address)) {
         legitimate = true;
         break;
       }
@@ -174,12 +175,12 @@ void PageTable::handle_fault(REGS *_r) {
   if ((*pde & 1) == 0) {
     unsigned long new_frame = process_mem_pool->get_frames(1);
     assert(new_frame != 0);
-    *pde = (new_frame * 4 KB) | 3;
+    *pde = (new_frame * PAGE_SIZE) | 3;
 
     unsigned long *new_pt = (unsigned long *)(0xFFC00000 + (dir_idx << 12));
     for (int i = 0; i < 1024; i++) {
       // Enabling R/W bit and invalid bit
-      new_pt[i] = 0 | 2;
+      new_pt[i] = 2;
     }
   }
 
@@ -192,8 +193,9 @@ void PageTable::handle_fault(REGS *_r) {
   } else {
     unsigned long new_frame = process_mem_pool->get_frames(1);
     assert(new_frame != 0);
-    *pte = (new_frame * 4 KB) | 3;
+    *pte = (new_frame * PAGE_SIZE) | 3;
   }
+  write_cr3(read_cr3());
 }
 
 unsigned long *PageTable::PDE_address(unsigned long addr) {
@@ -219,13 +221,13 @@ void PageTable::free_page(unsigned long _page_no) {
   unsigned long page_addr = _page_no * PAGE_SIZE;
   unsigned long *pde = current_page_table->PDE_address(page_addr);
   if ((*pde & 1) == 0) {
-  Console::puts("Freeing incorrect page\n");
+    Console::puts("Freeing incorrect page\n");
     return;
   }
 
   unsigned long *pte = current_page_table->PTE_address(page_addr);
   if ((*pte & 1) == 0) {
-  Console::puts("Freeing incorrect page\n");
+    Console::puts("Freeing incorrect page\n");
     return;
   }
 
