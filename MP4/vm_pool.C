@@ -57,6 +57,7 @@ VMPool::VMPool(unsigned long _base_address, unsigned long _size,
   n_alloc = 1;
   n_free = 1;
 
+  page_table->register_pool(this);
   allocated[0].base = base_address;
   allocated[0].n_pages = 1;
 
@@ -66,7 +67,6 @@ VMPool::VMPool(unsigned long _base_address, unsigned long _size,
   // Chose to round down here if requested memory is not a multiple of page size
   free_regions[0].n_pages = total_pages - 1;
 
-  page_table->register_pool(this);
   Console::puts("Constructed VMPool object.\n");
 }
 
@@ -144,13 +144,19 @@ void VMPool::release(unsigned long _start_address) {
 }
 
 bool VMPool::is_legitimate(unsigned long _address) {
+  if (_address >= base_address &&
+      _address < base_address + PageTable::PAGE_SIZE) {
+    Console::puts("The address is a part of the metadat region.\n");
+    return true;
+  }
   for (unsigned long i = 0; i < n_alloc; i++) {
-    unsigned long first_address = allocated[i].base;
-    unsigned long end =
-        allocated[i].base + (PageTable::PAGE_SIZE * allocated[i].n_pages);
-    if (first_address <= _address && _address < end)
+
+    unsigned long start = allocated[i].base;
+    unsigned long end = start + allocated[i].n_pages * PageTable::PAGE_SIZE;
+
+    if (_address >= start && _address < end)
       return true;
   }
-  Console::puts("Checked whether address is part of an allocated region.\n");
+  Console::puts("The address is not a part of an allocated region.\n");
   return false;
 }
