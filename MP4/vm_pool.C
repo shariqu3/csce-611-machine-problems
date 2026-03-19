@@ -53,7 +53,7 @@ VMPool::VMPool(unsigned long _base_address, unsigned long _size,
   allocated = (Region *)base_address;
   free_regions = (Region *)(base_address + MAX_REGIONS * sizeof(Region));
 
-  int n_alloc = 0;
+  int n_alloc = 1;
   int n_free = 1;
 
   free_regions[0].base = base_address;
@@ -77,14 +77,23 @@ unsigned long VMPool::allocate(unsigned long _size) {
     if (free_regions[i].n_pages >= req_pages) {
       allocated[n_alloc].base = free_regions[i].base;
       allocated[n_alloc].n_pages = req_pages;
-
-      free_regions[i].base =
-          free_regions[i].base + req_pages * (page_table->PAGE_SIZE);
-      free_regions[i].n_pages -= req_pages;
-
       n_alloc++;
-      n_free--;
-      return allocated[n_alloc - 1].base;
+
+      if (free_regions[i].n_pages == req_pages) {
+        if (n_free > 1) {
+          free_regions[i] = free_regions[n_free - 1];
+        }
+        n_free--;
+        return allocated[n_alloc - 1].base;
+      }
+
+      else {
+        free_regions[i].base =
+            free_regions[i].base + req_pages * (page_table->PAGE_SIZE);
+        free_regions[i].n_pages -= req_pages;
+
+        return allocated[n_alloc - 1].base;
+      }
     }
   }
   return 0;
@@ -92,7 +101,15 @@ unsigned long VMPool::allocate(unsigned long _size) {
 }
 
 void VMPool::release(unsigned long _start_address) {
-  assert(false);
+  for (int i = 0; i < n_alloc; i++) {
+    if (allocated[i].base == _start_address) {
+      free_regions[n_free] = allocated[i];
+      allocated[i] = allocated[n_alloc - 1];
+      n_alloc--;
+      n_free++;
+    }
+  }
+
   Console::puts("Released region of memory.\n");
 }
 
