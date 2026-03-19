@@ -198,17 +198,44 @@ void PageTable::handle_fault(REGS *_r) {
   write_cr3(read_cr3());
 }
 
+/**
+ * @brief Computes the virtual address of the Page Directory Entry (PDE)
+ * for a given virtual address.
+ * * This uses the recursive page table trick (where the last entry of the
+ * page directory points to the directory itself) to access the directory
+ * entries through the virtual address space.
+ * * @param addr The virtual address for which to find the PDE.
+ * @return A pointer to the 4-byte Page Directory Entry.
+ */
 unsigned long *PageTable::PDE_address(unsigned long addr) {
   unsigned long X = addr >> 22;
   return (unsigned long *)(0xFFFFF000 + (X << 2));
 }
 
+/**
+ * @brief Computes the virtual address of the Page Table Entry (PTE)
+ * for a given virtual address.
+ * * Similar to PDE_address, this leverages the recursive mapping at
+ * 0xFFC00000 to access the specific page table and entry directly
+ * via virtual memory.
+ * * @param addr The virtual address for which to find the PTE.
+ * @return A pointer to the 4-byte Page Table Entry.
+ */
 unsigned long *PageTable::PTE_address(unsigned long addr) {
   unsigned long X = addr >> 22;
   unsigned long Y = (addr << 10) >> 22;
   return (unsigned long *)(0xFFC00000 + (X << 12) + (Y << 2));
 }
 
+/**
+ * @brief Registers a Virtual Memory (VM) Pool with the page table.
+ * * Adds a pointer to a VMPool object to an internal registry. This registry
+ * is used during page fault handling to verify if a faulting address
+ * belongs to a legitimate allocated memory region.
+ * * @param _vm_pool Pointer to the Virtual Memory Pool to be registered.
+ * @warning Asserts that the pool is not null and that the maximum
+ * number of pools (MAX_VM_POOLS) has not been exceeded.
+ */
 void PageTable::register_pool(VMPool *_vm_pool) {
   assert(_vm_pool != nullptr);
   assert(n_registered_pools < MAX_VM_POOLS);
@@ -217,6 +244,17 @@ void PageTable::register_pool(VMPool *_vm_pool) {
   Console::puts("registered VM pool\n");
 }
 
+/**
+ * @brief Deallocates a specific page and releases its physical frame.
+ * * This function locates the Page Table Entry for the given page number,
+ * identifies the physical frame it points to, releases that frame back
+ * to the frame pool, and marks the PTE as not present.
+ * * The TLB is flushed by reloading CR3 to ensure the translation is
+ * invalidated globally.
+ * * @param _page_no The page number (virtual address / PAGE_SIZE) to be freed.
+ * @note If the page or its parent directory entry is not present,
+ * the function logs an error and returns without action.
+ */
 void PageTable::free_page(unsigned long _page_no) {
   unsigned long page_addr = _page_no * PAGE_SIZE;
   unsigned long *pde = current_page_table->PDE_address(page_addr);
