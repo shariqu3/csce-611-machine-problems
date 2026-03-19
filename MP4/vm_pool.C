@@ -45,6 +45,7 @@
 
 VMPool::VMPool(unsigned long _base_address, unsigned long _size,
                ContFramePool *_frame_pool, PageTable *_page_table) {
+  assert(_size >= PageTable::PAGE_SIZE);
   base_address = _base_address;
   size = _size;
   frame_pool = _frame_pool;
@@ -53,12 +54,17 @@ VMPool::VMPool(unsigned long _base_address, unsigned long _size,
   allocated = (Region *)base_address;
   free_regions = (Region *)(base_address + MAX_REGIONS * sizeof(Region));
 
-  int n_alloc = 1;
-  int n_free = 1;
+  n_alloc = 1;
+  n_free = 1;
 
-  free_regions[0].base = base_address;
+  allocated[0].base = base_address;
+  allocated[0].n_pages = 1;
+
+  unsigned long total_pages = _size / PageTable::PAGE_SIZE;
+
+  free_regions[0].base = base_address + PageTable::PAGE_SIZE;
   // Chose to round down here if requested memory is not a multiple of page size
-  free_regions[0].n_pages = _size / page_table->PAGE_SIZE;
+  free_regions[0].n_pages = total_pages - 1;
 
   page_table->register_pool(this);
   Console::puts("Constructed VMPool object.\n");
