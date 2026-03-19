@@ -43,6 +43,17 @@
 /* METHODS FOR CLASS   V M P o o l */
 /*--------------------------------------------------------------------------*/
 
+/**
+ * @brief Constructs a Virtual Memory Pool.
+ * * Initializes the pool with a base virtual address and size. It sets up
+ * the metadata tracking (allocated and free lists) within the very first
+ * page of the virtual address space it manages.
+ * * @param _base_address The starting virtual address for this pool.
+ * @param _size Total size of the virtual address space in bytes.
+ * @param _frame_pool The physical frame pool associated with this VM pool.
+ * @param _page_table The page table used to register this pool and manage
+ * translations.
+ */
 VMPool::VMPool(unsigned long _base_address, unsigned long _size,
                ContFramePool *_frame_pool, PageTable *_page_table) {
   assert(_size >= PageTable::PAGE_SIZE);
@@ -70,6 +81,16 @@ VMPool::VMPool(unsigned long _base_address, unsigned long _size,
   Console::puts("Constructed VMPool object.\n");
 }
 
+/**
+ * @brief Allocates a contiguous region of virtual memory.
+ * * Searches the free list for a region large enough to satisfy the request.
+ * If found, it updates the free list and adds the new region to the
+ * allocated list.
+ * * @param _size The number of bytes to allocate.
+ * @return The starting virtual address of the allocated region, or 0 if
+ * allocation fails.
+ * @note The size is rounded up to the nearest page boundary.
+ */
 unsigned long VMPool::allocate(unsigned long _size) {
   if (n_alloc >= MAX_REGIONS) {
     Console::puts("Out of memory regions.\n");
@@ -109,6 +130,16 @@ unsigned long VMPool::allocate(unsigned long _size) {
   return 0;
 }
 
+/**
+ * @brief Releases an allocated region of virtual memory.
+ * * Identifies the region starting at the given address, tells the page
+ * table to free the associated physical frames, and returns the
+ * virtual range to the free list.
+ * * @param _start_address The virtual address where the region to be freed
+ * starts.
+ * @warning Attempting to free the base address (metadata page) will fail
+ * to protect the VMPool's management structures.
+ */
 void VMPool::release(unsigned long _start_address) {
   if (n_free >= MAX_REGIONS) {
     Console::puts("Free memory list is already at max capacity.\n");
@@ -143,6 +174,14 @@ void VMPool::release(unsigned long _start_address) {
   Console::puts("No region found with the given start_address.\n");
 }
 
+/**
+ * @brief Checks if a given virtual address is part of a valid allocation.
+ * * Used by the Page Table's fault handler to determine if a page fault
+ * was caused by a legitimate access or a segmentation fault.
+ * * @param _address The virtual address to validate.
+ * @return true if the address is within an allocated region (including
+ * metadata), false otherwise.
+ */
 bool VMPool::is_legitimate(unsigned long _address) {
   if (_address >= base_address &&
       _address < base_address + PageTable::PAGE_SIZE) {
