@@ -110,16 +110,35 @@ unsigned long VMPool::allocate(unsigned long _size) {
 }
 
 void VMPool::release(unsigned long _start_address) {
-  for (int i = 0; i < n_alloc; i++) {
+  if (n_free >= MAX_REGIONS) {
+    Console::puts("Free memory list is already at max capacity.\n");
+    return;
+  }
+
+  if (_start_address == base_address) {
+    Console::puts("Error: Trying to free metadata page containing free list "
+                  "and allocated list.\n");
+    return;
+  }
+
+  for (unsigned long i = 0; i < n_alloc; i++) {
     if (allocated[i].base == _start_address) {
+      unsigned long pages = allocated[i].n_pages;
+      unsigned long base = allocated[i].base;
+      for (unsigned long i = 0; i < pages; i++) {
+        unsigned long page_no = (base_address / PageTable::PAGE_SIZE) + i;
+        page_table->free_page(page_no);
+      }
       free_regions[n_free] = allocated[i];
       allocated[i] = allocated[n_alloc - 1];
       n_alloc--;
       n_free++;
+      Console::puts("Released region of memory.\n");
+      return;
     }
   }
 
-  Console::puts("Released region of memory.\n");
+  Console::puts("No region found with the given start_address.\n");
 }
 
 bool VMPool::is_legitimate(unsigned long _address) {
