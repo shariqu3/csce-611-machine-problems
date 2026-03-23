@@ -45,7 +45,8 @@
 /*--------------------------------------------------------------------------*/
 
 Scheduler::Scheduler() {
-  assert(false);
+  n_threads = 0;
+  running_thread = -1;
   Console::puts("Constructed Scheduler.\n");
 }
 
@@ -53,6 +54,12 @@ void Scheduler::yield() { assert(false); }
 
 void Scheduler::resume(Thread *_thread) { assert(false); }
 
-void Scheduler::add(Thread *_thread) { assert(false); }
+void Scheduler::add(Thread *_thread) {
+  if (n_threads == 32) {
+    Console::puts("Max threads already in queue.\n");
+    assert(false);
+  }
+  q[n_threads++] = _thread;
+}
 
 void Scheduler::terminate(Thread *_thread) { assert(false); }

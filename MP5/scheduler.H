@@ -57,6 +57,9 @@
 class Scheduler {
 
   /* The scheduler may need private members... */
+  Thread *q[32];
+  int n_threads;
+  int running_thread;
 
 public:
   Scheduler();
