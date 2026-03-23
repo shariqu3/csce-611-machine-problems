@@ -1,9 +1,9 @@
 /*
  File: scheduler.C
- 
+
  Author:
  Date  :
- 
+
  */
 
 /*--------------------------------------------------------------------------*/
@@ -16,11 +16,11 @@
 /* INCLUDES */
 /*--------------------------------------------------------------------------*/
 
+#include "assert.H"
+#include "console.H"
 #include "scheduler.H"
 #include "thread.H"
-#include "console.H"
 #include "utils.H"
-#include "assert.H"
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */
@@ -49,18 +49,10 @@ Scheduler::Scheduler() {
   Console::puts("Constructed Scheduler.\n");
 }
 
-void Scheduler::yield() {
-  assert(false);
-}
+void Scheduler::yield() { assert(false); }
 
-void Scheduler::resume(Thread * _thread) {
-  assert(false);
-}
+void Scheduler::resume(Thread *_thread) { assert(false); }
 
-void Scheduler::add(Thread * _thread) {
-  assert(false);
-}
+void Scheduler::add(Thread *_thread) { assert(false); }
 
-void Scheduler::terminate(Thread * _thread) {
-  assert(false);
-}
+void Scheduler::terminate(Thread *_thread) { assert(false); }
