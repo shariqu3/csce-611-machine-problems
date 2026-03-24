@@ -32,6 +32,11 @@
 /* CONSTANTS */
 /*--------------------------------------------------------------------------*/
 
+void do_nothing() {
+  for (;;)
+    ;
+}
+
 /* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
@@ -46,20 +51,30 @@
 
 Scheduler::Scheduler() {
   n_threads = 0;
-  running_thread = -1;
+  sentinel_thread = new Thread(do_nothing, nullptr, 0);
+  running_thread = sentinel_thread;
+  start = 0;
   Console::puts("Constructed Scheduler.\n");
 }
 
-void Scheduler::yield() { assert(false); }
+void Scheduler::yield() {
+  if (running_thread != sentinel_thread) {
+    add(running_thread);
+    n_threads++;
+  }
+  running_thread = q[start];
+  start = (start + 1) % MAX_THREADS;
+}
 
-void Scheduler::resume(Thread *_thread) { assert(false); }
-
-void Scheduler::add(Thread *_thread) {
-  if (n_threads == 32) {
+void Scheduler::resume(Thread *_thread) {
+  if (n_threads == MAX_THREADS) {
     Console::puts("Max threads already in queue.\n");
     assert(false);
   }
-  q[n_threads++] = _thread;
+  q[(start + n_threads) % MAX_THREADS] = _thread;
+  n_threads++;
 }
+
+void Scheduler::add(Thread *_thread) { resume(_thread); }
 
 void Scheduler::terminate(Thread *_thread) { assert(false); }

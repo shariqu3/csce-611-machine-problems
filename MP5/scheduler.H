@@ -57,9 +57,12 @@
 class Scheduler {
 
   /* The scheduler may need private members... */
-  Thread *q[32];
+  const static int MAX_THREADS = 8;
+  Thread *q[MAX_THREADS];
+  Thread *running_thread;
+  Thread *sentinel_thread;
   int n_threads;
-  int running_thread;
+  int start;
 
 public:
   Scheduler();
