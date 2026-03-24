@@ -32,12 +32,6 @@
 /* CONSTANTS */
 /*--------------------------------------------------------------------------*/
 
-void do_nothing() {
-  for (;;) {
-    Console::puts("Running sentinel thread.\n");
-  }
-}
-
 /* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
@@ -53,23 +47,26 @@ void do_nothing() {
 Scheduler::Scheduler() {
   n_threads = 0;
   start = 0;
+  running_thread = nullptr;
 
-  sentinel_thread = new Thread(do_nothing, nullptr, 0);
-  running_thread = sentinel_thread;
-
-  Thread::dispatch_to(running_thread);
   Console::puts("Constructed Scheduler.\n");
 }
 
+void Scheduler::print_details() {
+  Console::puts("Details:.\n");
+  Console::puts("n_threads: ");
+  Console::puti(n_threads);
+  Console::puts("\n");
+  Console::puts("start: ");
+  Console::puti(start);
+  Console::puts("\n");
+}
+
 void Scheduler::yield() {
-  if (running_thread == sentinel_thread) {
-    n_threads--;
-  } else {
-    add(running_thread);
-  }
   running_thread = q[start];
-  Thread::dispatch_to(running_thread);
   start = (start + 1) % MAX_THREADS;
+  n_threads--;
+  Thread::dispatch_to(running_thread);
 }
 
 void Scheduler::resume(Thread *_thread) {
@@ -77,11 +74,7 @@ void Scheduler::resume(Thread *_thread) {
     Console::puts("Max threads already in queue.\n");
     assert(false);
   }
-  q[(start + n_threads) % MAX_THREADS] = _thread;
-  n_threads++;
-  if (n_threads == 1) {
-    yield();
-  }
+  q[(start + n_threads++) % MAX_THREADS] = _thread;
 }
 
 void Scheduler::add(Thread *_thread) { resume(_thread); }

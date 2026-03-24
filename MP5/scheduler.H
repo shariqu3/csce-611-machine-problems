@@ -60,7 +60,6 @@ class Scheduler {
   const static int MAX_THREADS = 8;
   Thread *q[MAX_THREADS];
   Thread *running_thread;
-  Thread *sentinel_thread;
   int n_threads;
   int start;
 
@@ -93,6 +92,8 @@ public:
   /* Remove the given thread from the scheduler in preparation for destruction
      of the thread.
      Graciously handle the case where the thread wants to terminate itself.*/
+  // Added for debugging
+  void print_details();
 };
 
 #endif
