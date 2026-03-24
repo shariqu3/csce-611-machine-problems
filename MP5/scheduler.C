@@ -33,8 +33,9 @@
 /*--------------------------------------------------------------------------*/
 
 void do_nothing() {
-  for (;;)
-    ;
+  for (;;) {
+    Console::puts("Running sentinel thread.\n");
+  }
 }
 
 /* -- (none) -- */
@@ -51,18 +52,23 @@ void do_nothing() {
 
 Scheduler::Scheduler() {
   n_threads = 0;
+  start = 0;
+
   sentinel_thread = new Thread(do_nothing, nullptr, 0);
   running_thread = sentinel_thread;
-  start = 0;
+
+  Thread::dispatch_to(running_thread);
   Console::puts("Constructed Scheduler.\n");
 }
 
 void Scheduler::yield() {
-  if (running_thread != sentinel_thread) {
+  if (running_thread == sentinel_thread) {
+    n_threads--;
+  } else {
     add(running_thread);
-    n_threads++;
   }
   running_thread = q[start];
+  Thread::dispatch_to(running_thread);
   start = (start + 1) % MAX_THREADS;
 }
 
@@ -73,6 +79,9 @@ void Scheduler::resume(Thread *_thread) {
   }
   q[(start + n_threads) % MAX_THREADS] = _thread;
   n_threads++;
+  if (n_threads == 1) {
+    yield();
+  }
 }
 
 void Scheduler::add(Thread *_thread) { resume(_thread); }
