@@ -70,6 +70,11 @@ void Scheduler::yield() {
 }
 
 void Scheduler::resume(Thread *_thread) {
+  while (z_threads) {
+    Thread *del_thread = zombie_q[--z_threads];
+    del_thread->cleanup();
+    delete del_thread;
+  }
   if (n_threads == MAX_THREADS) {
     Console::puts("Max threads already in queue.\n");
     assert(false);

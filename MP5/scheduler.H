@@ -64,6 +64,8 @@ class Scheduler {
   int start;
 
 public:
+  static Thread *zombie_q[MAX_THREADS];
+  static int z_threads;
   Scheduler();
   /* Setup the scheduler. This sets up the ready queue, for example.
      If the scheduler implements some sort of round-robin scheme, then the

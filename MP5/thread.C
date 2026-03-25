@@ -33,8 +33,8 @@
 
 #include "frame_pool.H"
 
+#include "scheduler.H"
 #include "thread.H"
-
 #include "threads_low.H"
 
 /*--------------------------------------------------------------------------*/
@@ -74,8 +74,8 @@ static void thread_shutdown() {
      resources held by the thread. This is a bit complicated because the thread
      termination interacts with the scheduler.
    */
-
-  assert(false);
+  Scheduler::zombie_q[Scheduler::z_threads++] = Thread::CurrentThread();
+  // assert(false)
   /* Let's not worry about it for now.
      This means that we should have non-terminating thread functions.
   */
@@ -89,6 +89,11 @@ static void thread_start() {
    * interrupts. */
 }
 
+void Thread::cleanup() {
+  delete esp;
+  delete stack;
+  delete cargo;
+}
 void Thread::setup_context(Thread_Function _tfunction) {
   /* Sets up the initial context for the given kernel-only thread.
      The thread is supposed the call the function _tfunction upon start.

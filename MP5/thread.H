@@ -72,6 +72,8 @@ public:
      i.e., to the bottom of the stack.
   */
 
+  void cleanup();
+
   int ThreadId();
   /* Returns the thread id of the thread. */
 

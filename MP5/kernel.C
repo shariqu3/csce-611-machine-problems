@@ -31,7 +31,6 @@
 */
 
 /* -- UNCOMMENT THE FOLLOWING LINE TO MAKE THREADS TERMINATING */
-
 // #define _TERMINATING_FUNCTIONS_
 /* This macro is defined when we want the thread functions to return, and so
    terminate their thread.
@@ -64,6 +63,9 @@
 /*--------------------------------------------------------------------------*/
 /* MEMORY MANAGEMENT */
 /*--------------------------------------------------------------------------*/
+
+Thread *Scheduler::zombie_q[8] = {nullptr};
+int Scheduler::z_threads = 0;
 
 /* -- A POOL OF FRAMES FOR THE SYSTEM TO USE */
 FramePool *SYSTEM_FRAME_POOL;
