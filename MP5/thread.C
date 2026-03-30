@@ -85,6 +85,9 @@ static void thread_start() {
 
   /* We need to add code, but it is probably nothing more than enabling
    * interrupts. */
+  if (!Machine::interrupts_enabled()) {
+    Machine::enable_interrupts();
+  }
 }
 
 void Thread::cleanup() {
