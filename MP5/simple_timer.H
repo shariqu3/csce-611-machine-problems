@@ -28,6 +28,8 @@
 
 #include "interrupts.H"
 
+class Scheduler;
+
 /*--------------------------------------------------------------------------*/
 /* S I M P L E   T I M E R  */
 /*--------------------------------------------------------------------------*/
@@ -68,9 +70,11 @@ class EOQTimer : public SimpleTimer {
 private:
   int quantum_ticks;
   int ticks_since_quantum;
+  Scheduler *scheduler;
 
 public:
-  EOQTimer(int _hz, int _quantum_ticks);
+  EOQTimer(int _hz, int _quantum_ticks, Scheduler *_scheduler);
+  void reset_quantum();
   virtual void handle_interrupt(REGS *_r) override;
 };
 #endif

@@ -96,26 +96,29 @@ void SimpleTimer::wait(unsigned long _seconds) {
     ;
 }
 
-EOQTimer::EOQTimer(int _hz, int _quantum_ticks) : SimpleTimer(_hz) {
+EOQTimer::EOQTimer(int _hz, int _quantum_ticks, Scheduler *_scheduler)
+    : SimpleTimer(_hz) {
   quantum_ticks = _quantum_ticks;
   ticks_since_quantum = 0;
+  scheduler = _scheduler;
 }
 
+void EOQTimer::reset_quantum() { ticks_since_quantum = 0; }
+
 void EOQTimer::handle_interrupt(REGS *_r) {
-  ticks++;
+  SimpleTimer::handle_interrupt(_r);
+
   ticks_since_quantum++;
-
-  /* Whenever a second is over, we update counter accordingly. */
-  if (ticks >= hz) {
-    seconds++;
-    ticks = 0;
-    Console::puts("One second has passed\n");
+  if (ticks_since_quantum < quantum_ticks) {
+    return;
   }
 
-  if (ticks_since_quantum >= quantum_ticks) {
-    ticks_since_quantum = 0;
-    if (Thread::SYSTEM_SCHEDULER != nullptr) {
-      Thread::SYSTEM_SCHEDULER->request_preemption();
-    }
+  ticks_since_quantum = 0;
+
+  if (scheduler == nullptr) {
+    return;
   }
+
+  InterruptHandler::acknowledge_interrupt(_r);
+  scheduler->request_preemption();
 }
