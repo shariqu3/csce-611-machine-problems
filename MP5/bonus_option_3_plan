@@ -1,0 +1,7 @@
+Will need to readd paging content
+
+Every thread will have their own page_table, will add it as a private variable
+
+1. On thread creating, add code to create a page table in constructor
+2. On thread switching (resume): Load the page table and flush the tlb
+3. On thread cleanup: Freeup the space allocated to the pagetable pointer.

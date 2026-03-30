@@ -19,7 +19,7 @@
 /* INCLUDES */
 /*--------------------------------------------------------------------------*/
 
-#include "thread.H"
+class Thread;
 
 /*--------------------------------------------------------------------------*/
 /* !!! IMPLEMENTATION HINT !!! */
@@ -63,9 +63,10 @@ class Scheduler {
   int n_threads;
   int start;
 
+  Thread *zombie_q[MAX_THREADS];
+  int z_threads;
+
 public:
-  static Thread *zombie_q[MAX_THREADS];
-  static int z_threads;
   Scheduler();
   /* Setup the scheduler. This sets up the ready queue, for example.
      If the scheduler implements some sort of round-robin scheme, then the
@@ -94,6 +95,7 @@ public:
   /* Remove the given thread from the scheduler in preparation for destruction
      of the thread.
      Graciously handle the case where the thread wants to terminate itself.*/
+
   // Added for debugging
   void print_details();
 };

@@ -50,6 +50,7 @@ Thread *current_thread = 0;
 /* -------------------------------------------------------------------------*/
 
 int Thread::nextFreePid;
+Scheduler *Thread::SYSTEM_SCHEDULER = nullptr;
 
 /* -------------------------------------------------------------------------*/
 /* LOCAL FUNCTIONS */
@@ -74,11 +75,8 @@ static void thread_shutdown() {
      resources held by the thread. This is a bit complicated because the thread
      termination interacts with the scheduler.
    */
-  Scheduler::zombie_q[Scheduler::z_threads++] = Thread::CurrentThread();
-  // assert(false)
-  /* Let's not worry about it for now.
-     This means that we should have non-terminating thread functions.
-  */
+  Thread::SYSTEM_SCHEDULER->terminate(Thread::CurrentThread());
+  assert(false);
 }
 
 static void thread_start() {
@@ -90,10 +88,10 @@ static void thread_start() {
 }
 
 void Thread::cleanup() {
-  delete esp;
-  delete stack;
+  delete[] stack;
   delete cargo;
 }
+
 void Thread::setup_context(Thread_Function _tfunction) {
   /* Sets up the initial context for the given kernel-only thread.
      The thread is supposed the call the function _tfunction upon start.
@@ -189,6 +187,7 @@ Thread::Thread(Thread_Function _tf, char *_stack, unsigned int _stack_size) {
 
   stack = _stack;
   stack_size = _stack_size;
+  cargo = nullptr;
 
   /* -- INITIALIZE THE STACK OF THE THREAD */
 

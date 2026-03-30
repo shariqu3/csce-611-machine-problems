@@ -13,9 +13,10 @@
                  execution of threads.
 
 */
-
 #ifndef _thread_H_ // include file only once
 #define _thread_H_
+
+class Scheduler;
 
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
@@ -65,6 +66,7 @@ private:
   */
 
 public:
+  static Scheduler *SYSTEM_SCHEDULER;
   Thread(Thread_Function _tf, char *_stack, unsigned int _stack_size);
   /* Create a thread that is set up to execute the given thread function.
      The thread is given a pointer to the stack to use.
