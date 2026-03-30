@@ -195,6 +195,20 @@ void Scheduler::terminate(Thread *_thread) {
   }
 }
 
+void Scheduler::request_preemption() {
+  Thread *current_thread = Thread::CurrentThread();
+  if (current_thread == nullptr) {
+    return;
+  }
+
+  if (n_threads == 0) {
+    return;
+  }
+
+  resume(current_thread);
+  yield();
+}
+
 RRScheduler::RRScheduler() : Scheduler() {
   eoq_timer = new EOQTimer(TIMER_HZ, QUANTUM_TICKS, this);
   InterruptHandler::register_handler(0, eoq_timer);

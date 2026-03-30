@@ -114,6 +114,7 @@ private:
 
 public:
   RRScheduler();
+  virtual void yield();
   virtual void request_preemption();
 };
 
