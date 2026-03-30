@@ -266,23 +266,24 @@ int main() {
 
   /* -- MEMORY ALLOCATOR IS INITIALIZED. WE CAN USE new/delete! --*/
 
-  /* -- INITIALIZE THE TIMER (we use a very simple timer).-- */
+  /* -- INITIALIZE THE TIMER / SCHEDULER. -- */
 
   /* Question: Why do we want a timer? We have it to make sure that
                we enable interrupts correctly. If we forget to do it,
                the timer "dies". */
 
-  EOQTimer timer(100); /* timer ticks every 10ms. */
-  InterruptHandler::register_handler(0, &timer);
-  /* The Timer is implemented as an interrupt handler. */
-
 #ifdef _USES_SCHEDULER_
 
   /* -- SCHEDULER -- IF YOU HAVE ONE -- */
 
-  SYSTEM_SCHEDULER = new Scheduler();
+  SYSTEM_SCHEDULER = new RRScheduler();
   Thread::SYSTEM_SCHEDULER = SYSTEM_SCHEDULER;
-  RRScheduler *tmp = new RRScheduler();
+
+#else
+
+  SimpleTimer timer(100); /* timer ticks every 10ms. */
+  InterruptHandler::register_handler(0, &timer);
+  /* The Timer is implemented as an interrupt handler. */
 
 #endif
 
