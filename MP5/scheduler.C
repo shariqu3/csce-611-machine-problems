@@ -195,4 +195,14 @@ void Scheduler::terminate(Thread *_thread) {
   }
 }
 
-RRScheduler::RRScheduler() { *eoq_timer = SimpleTimer(50); }
+RRScheduler::RRScheduler() : Scheduler() {
+  eoq_timer = new EOQTimer(TIMER_HZ, QUANTUM_TICKS, this);
+  InterruptHandler::register_handler(0, eoq_timer);
+}
+
+void RRScheduler::yield() {
+  eoq_timer->reset_quantum();
+  Scheduler::yield();
+}
+
+void RRScheduler::request_preemption() { Scheduler::request_preemption(); }
