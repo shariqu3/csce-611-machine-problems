@@ -61,13 +61,18 @@ class Scheduler {
   /* The scheduler may need private members... */
 protected:
   const static int MAX_THREADS = 8;
+  const static int SENTINEL_STACK_SIZE = 1024;
   Thread *q[MAX_THREADS];
   Thread *running_thread;
+  Thread *sentinel_thread;
+  char *sentinel_stack;
   int n_threads;
   int start;
 
   Thread *zombie_q[MAX_THREADS];
   int z_threads;
+
+  static void sentinel_entry();
 
 public:
   Scheduler();
