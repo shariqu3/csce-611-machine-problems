@@ -20,6 +20,7 @@
 /*--------------------------------------------------------------------------*/
 
 class Thread;
+class SimpleTimer;
 
 /*--------------------------------------------------------------------------*/
 /* !!! IMPLEMENTATION HINT !!! */
@@ -57,6 +58,7 @@ class Thread;
 class Scheduler {
 
   /* The scheduler may need private members... */
+protected:
   const static int MAX_THREADS = 8;
   Thread *q[MAX_THREADS];
   Thread *running_thread;
@@ -98,6 +100,14 @@ public:
 
   // Added for debugging
   void print_details();
+};
+
+class RRScheduler : public Scheduler {
+private:
+  SimpleTimer *eoq_timer;
+
+public:
+  RRScheduler();
 };
 
 #endif

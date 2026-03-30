@@ -19,6 +19,7 @@
 #include "assert.H"
 #include "console.H"
 #include "scheduler.H"
+#include "simple_timer.H"
 #include "thread.H"
 #include "utils.H"
 
@@ -193,3 +194,5 @@ void Scheduler::terminate(Thread *_thread) {
     Machine::enable_interrupts();
   }
 }
+
+RRScheduler::RRScheduler() { *eoq_timer = SimpleTimer(50); }

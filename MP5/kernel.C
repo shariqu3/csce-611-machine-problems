@@ -282,6 +282,7 @@ int main() {
 
   SYSTEM_SCHEDULER = new Scheduler();
   Thread::SYSTEM_SCHEDULER = SYSTEM_SCHEDULER;
+  RRScheduler *tmp = new RRScheduler();
 
 #endif
 
