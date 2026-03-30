@@ -22,7 +22,9 @@
 #include "assert.H"
 #include "console.H"
 #include "interrupts.H"
+#include "scheduler.H"
 #include "simple_timer.H"
+#include "thread.H"
 #include "utils.H"
 
 /*--------------------------------------------------------------------------*/
@@ -94,15 +96,26 @@ void SimpleTimer::wait(unsigned long _seconds) {
     ;
 }
 
-EOQTimer::EOQTimer(int _hz) : SimpleTimer(_hz) {}
+EOQTimer::EOQTimer(int _hz, int _quantum_ticks) : SimpleTimer(_hz) {
+  quantum_ticks = _quantum_ticks;
+  ticks_since_quantum = 0;
+}
 
 void EOQTimer::handle_interrupt(REGS *_r) {
   ticks++;
+  ticks_since_quantum++;
 
   /* Whenever a second is over, we update counter accordingly. */
   if (ticks >= hz) {
     seconds++;
     ticks = 0;
-    Console::puts("One second has passed: EOQTimer\n");
+    Console::puts("One second has passed\n");
+  }
+
+  if (ticks_since_quantum >= quantum_ticks) {
+    ticks_since_quantum = 0;
+    if (Thread::SYSTEM_SCHEDULER != nullptr) {
+      Thread::SYSTEM_SCHEDULER->request_preemption();
+    }
   }
 }

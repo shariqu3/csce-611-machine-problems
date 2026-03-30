@@ -65,8 +65,12 @@ public:
 };
 
 class EOQTimer : public SimpleTimer {
+private:
+  int quantum_ticks;
+  int ticks_since_quantum;
+
 public:
-  EOQTimer(int _hz);
+  EOQTimer(int _hz, int _quantum_ticks);
   virtual void handle_interrupt(REGS *_r) override;
 };
 #endif
