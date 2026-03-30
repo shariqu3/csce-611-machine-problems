@@ -96,4 +96,13 @@ void SimpleTimer::wait(unsigned long _seconds) {
 
 EOQTimer::EOQTimer(int _hz) : SimpleTimer(_hz) {}
 
-void EOQTimer::handle_interrupt(REGS *_r) {}
+void EOQTimer::handle_interrupt(REGS *_r) {
+  ticks++;
+
+  /* Whenever a second is over, we update counter accordingly. */
+  if (ticks >= hz) {
+    seconds++;
+    ticks = 0;
+    Console::puts("One second has passed: EOQTimer\n");
+  }
+}
