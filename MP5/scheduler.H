@@ -21,6 +21,7 @@
 
 class Thread;
 class SimpleTimer;
+class EOQTimer;
 
 /*--------------------------------------------------------------------------*/
 /* !!! IMPLEMENTATION HINT !!! */
@@ -98,16 +99,22 @@ public:
      of the thread.
      Graciously handle the case where the thread wants to terminate itself.*/
 
+  virtual void request_preemption();
+
   // Added for debugging
   void print_details();
 };
 
 class RRScheduler : public Scheduler {
 private:
-  SimpleTimer *eoq_timer;
+  EOQTimer *eoq_timer;
+
+  static const int TIMER_HZ = 100;
+  static const int QUANTUM_TICKS = 5;
 
 public:
   RRScheduler();
+  virtual void request_preemption();
 };
 
 #endif
