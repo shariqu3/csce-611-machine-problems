@@ -22,6 +22,9 @@
 /*--------------------------------------------------------------------------*/
 
 #include "simple_disk.H"
+#include "interrupts.H"
+
+class Thread;
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
@@ -33,7 +36,13 @@
 /* N o n B l o c k i n g D i s k  */
 /*--------------------------------------------------------------------------*/
 
-class NonBlockingDisk : public SimpleDisk {
+class NonBlockingDisk : public SimpleDisk, public InterruptHandler {
+private:
+    Thread* waiting_thread;
+
+protected:
+    virtual void wait_while_busy();
+
 public:
    NonBlockingDisk(unsigned int _size); 
    /* Creates a NonBlockingDisk device with the given size connected to the 
@@ -42,6 +51,7 @@ public:
       In a real system, we would infer this information from the 
       disk controller. */
 
+   virtual void handle_interrupt(REGS * _r);
 };
 
 #endif
