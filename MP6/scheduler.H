@@ -22,6 +22,7 @@
 class Thread;
 class SimpleTimer;
 class EOQTimer;
+class NonBlockingDisk;
 
 /*--------------------------------------------------------------------------*/
 /* !!! IMPLEMENTATION HINT !!! */
