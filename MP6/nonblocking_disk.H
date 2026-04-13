@@ -2,10 +2,8 @@
      File        : nonblocking_disk.H
 
      Author      : 
-
      Date        : 
      Description : 
-
 */
 
 #ifndef _NONBLOCKING_DISK_H_
@@ -38,7 +36,11 @@ class Thread;
 
 class NonBlockingDisk : public SimpleDisk, public InterruptHandler {
 private:
-    Thread* waiting_thread;
+    Thread* disk_queue[8];
+    int start;
+    int n_threads;
+    bool is_disk_in_use;
+    Thread* current_disk_thread;
 
 protected:
     virtual void wait_while_busy();
@@ -50,6 +52,13 @@ public:
       NOTE: We are passing the _size argument out of laziness. 
       In a real system, we would infer this information from the 
       disk controller. */
+
+   virtual bool possible_disk_operation();
+   /* Returns true if a disk operation is possible at the moment, and false  
+   otherwise. */
+
+   virtual void read(unsigned long _block_no, unsigned char* _buf);
+   virtual void write(unsigned long _block_no, unsigned char* _buf);
 
    virtual void handle_interrupt(REGS * _r);
 };
