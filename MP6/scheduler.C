@@ -1,8 +1,10 @@
 /*
  File: scheduler.C
 
+
  Author:
  Date  :
+
 
  */
 
@@ -18,7 +20,10 @@
 
 #include "assert.H"
 #include "console.H"
+#include "assert.H"
+#include "console.H"
 #include "scheduler.H"
+#include "simple_timer.H"
 #include "simple_timer.H"
 #include "thread.H"
 #include "utils.H"
@@ -53,6 +58,14 @@ void Scheduler::sentinel_entry() {
   }
 }
 
+void Scheduler::sentinel_entry() {
+  for (;;) {
+    if (Thread::SYSTEM_SCHEDULER != nullptr) {
+      Thread::SYSTEM_SCHEDULER->yield();
+    }
+  }
+}
+
 Scheduler::Scheduler() {
   n_threads = 0;
   start = 0;
@@ -70,7 +83,33 @@ Scheduler::Scheduler() {
   sentinel_thread = new Thread(&Scheduler::sentinel_entry, sentinel_stack,
                                SENTINEL_STACK_SIZE);
 
+  n_threads = 0;
+  start = 0;
+  running_thread = nullptr;
+  sentinel_thread = nullptr;
+  sentinel_stack = nullptr;
+  z_threads = 0;
+
+  for (int i = 0; i < MAX_THREADS; i++) {
+    q[i] = nullptr;
+    zombie_q[i] = nullptr;
+  }
+
+  sentinel_stack = new char[SENTINEL_STACK_SIZE];
+  sentinel_thread = new Thread(&Scheduler::sentinel_entry, sentinel_stack,
+                               SENTINEL_STACK_SIZE);
+
   Console::puts("Constructed Scheduler.\n");
+}
+
+void Scheduler::print_details() {
+  Console::puts("Details:.\n");
+  Console::puts("n_threads: ");
+  Console::puti(n_threads);
+  Console::puts("\n");
+  Console::puts("start: ");
+  Console::puti(start);
+  Console::puts("\n");
 }
 
 void Scheduler::print_details() {
@@ -191,7 +230,126 @@ void Scheduler::terminate(Thread *_thread) {
     Console::puts("Too many zombie threads.\n");
     assert(false);
   }
+  bool is_interrupts_enabled = Machine::interrupts_enabled();
+  if (is_interrupts_enabled) {
+    Machine::disable_interrupts();
+  }
 
+  if (n_threads == 0) {
+    Thread *current_thread = Thread::CurrentThread();
+
+    if (current_thread == sentinel_thread) {
+      if (is_interrupts_enabled) {
+        Machine::enable_interrupts();
+      }
+      return;
+    }
+
+    running_thread = sentinel_thread;
+
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+
+    Thread::dispatch_to(sentinel_thread);
+    return;
+  }
+
+  running_thread = q[start];
+  q[start] = nullptr;
+  start = (start + 1) % MAX_THREADS;
+  n_threads--;
+
+  if (is_interrupts_enabled) {
+    Machine::enable_interrupts();
+  }
+
+  Thread::dispatch_to(running_thread);
+}
+
+void Scheduler::resume(Thread *_thread) {
+  bool is_interrupts_enabled = Machine::interrupts_enabled();
+  if (is_interrupts_enabled) {
+    Machine::disable_interrupts();
+  }
+
+  while (z_threads) {
+    Thread *del_thread = zombie_q[--z_threads];
+    zombie_q[z_threads] = nullptr;
+    del_thread->cleanup();
+    delete del_thread;
+    del_thread = nullptr;
+  }
+  if (_thread == nullptr) {
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+    return;
+  }
+
+  if (_thread == sentinel_thread) {
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+    return;
+  }
+
+  if (n_threads == MAX_THREADS) {
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+    Console::puts("Max threads already in queue.\n");
+    assert(false);
+  }
+  q[(start + n_threads++) % MAX_THREADS] = _thread;
+
+  if (is_interrupts_enabled) {
+    Machine::enable_interrupts();
+  }
+}
+
+void Scheduler::add(Thread *_thread) { resume(_thread); }
+
+void Scheduler::terminate(Thread *_thread) {
+  bool is_interrupts_enabled = Machine::interrupts_enabled();
+  if (is_interrupts_enabled) {
+    Machine::disable_interrupts();
+  }
+
+  if (_thread == nullptr) {
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+    return;
+  }
+
+  if (_thread == sentinel_thread) {
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+    return;
+  }
+
+  if (z_threads == MAX_THREADS) {
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+    Console::puts("Too many zombie threads.\n");
+    assert(false);
+  }
+
+  Thread *current_thread = Thread::CurrentThread();
+
+  if (_thread == current_thread) {
+    zombie_q[z_threads++] = _thread;
+
+    if (is_interrupts_enabled) {
+      Machine::enable_interrupts();
+    }
+
+    yield();
+    assert(false);
+  }
   Thread *current_thread = Thread::CurrentThread();
 
   if (_thread == current_thread) {
@@ -249,15 +407,3 @@ void Scheduler::request_preemption() {
   resume(current_thread);
   yield();
 }
-
-RRScheduler::RRScheduler() : Scheduler() {
-  eoq_timer = new EOQTimer(TIMER_HZ, QUANTUM_TICKS, this);
-  InterruptHandler::register_handler(0, eoq_timer);
-}
-
-void RRScheduler::yield() {
-  eoq_timer->reset_quantum();
-  Scheduler::yield();
-}
-
-void RRScheduler::request_preemption() { Scheduler::request_preemption(); }

@@ -21,8 +21,9 @@
 /*--------------------------------------------------------------------------*/
 
 #include "simple_disk.H"
+#include "interrupts.H"
+
 class Thread;
-class Scheduler;
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
@@ -34,11 +35,12 @@ class Scheduler;
 /* N o n B l o c k i n g D i s k  */
 /*--------------------------------------------------------------------------*/
 
-class NonBlockingDisk : public SimpleDisk {
-   const static int MAX_THREADS = 8;
-   static Thread *disk_q[MAX_THREADS];
-   int n_threads;
-   int start;
+class NonBlockingDisk : public SimpleDisk, public InterruptHandler {
+private:
+    Thread* waiting_thread;
+
+protected:
+    virtual void wait_while_busy();
 
 public:
    NonBlockingDisk(unsigned int _size); 
@@ -53,6 +55,7 @@ public:
    otherwise. */
 
 
+   virtual void handle_interrupt(REGS * _r);
 };
 
 #endif

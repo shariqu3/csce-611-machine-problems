@@ -19,7 +19,7 @@
 
 /* -- COMMENT/UNCOMMENT THE FOLLOWING LINE TO EXCLUDE/INCLUDE SCHEDULER CODE */
 
-//#define _USES_SCHEDULER_
+#define _USES_SCHEDULER_
 /* This macro is defined when we want to force the code below to use
    a scheduler.
    Otherwise, no scheduler is used, and the threads pass control to each
@@ -51,7 +51,7 @@
 #include "scheduler.H"      /* WE WILL NEED A SCHEDULER WITH NonBlockingDisk */
 
 #include "simple_disk.H"    /* DISK DEVICE */
-							/* YOU MAY NEED TO INCLUDE nonblocking_disk.H */
+#include "nonblocking_disk.H"
 
 #include "system.H"         /* SYSTEM COMPONENTS: SCHEDULER, MEMORY, DISK */
 
@@ -270,11 +270,11 @@ int main()
 
 	/* -- DISK DEVICE -- */
 
-	System::DISK = new SimpleDisk(System::DISK_SIZE); // Replace this with commented code below when you are ready!
+	// System::DISK = new SimpleDisk(System::DISK_SIZE); // Replace this with commented code below when you are ready!
 
 	// #define _USES_SCHEDULER_
 	// // The NonBlockingDisk uses a scheduler.
-	// System::DISK = new NonBlockingDisk(System::DISK_SIZE);
+	System::DISK = new NonBlockingDisk(System::DISK_SIZE);
 
 	/* -- SCHEDULER -- IF YOU HAVE ONE -- */
 
@@ -293,23 +293,23 @@ int main()
 	/* -- LET'S CREATE SOME THREADS... */
 
 	Console::puts("CREATING THREAD 1...\n");
-	char* stack1 = new char[1024];
-	thread1 = new Thread(fun1, stack1, 1024);
+	char* stack1 = new char[4096];
+	thread1 = new Thread(fun1, stack1, 4096);
 	Console::puts("DONE\n");
 
 	Console::puts("CREATING THREAD 2...");
-	char* stack2 = new char[1024];
-	thread2 = new Thread(fun2, stack2, 1024);
+	char* stack2 = new char[4096];
+	thread2 = new Thread(fun2, stack2, 4096);
 	Console::puts("DONE\n");
 
 	Console::puts("CREATING THREAD 3...");
-	char* stack3 = new char[1024];
-	thread3 = new Thread(fun3, stack3, 1024);
+	char* stack3 = new char[4096];
+	thread3 = new Thread(fun3, stack3, 4096);
 	Console::puts("DONE\n");
 
 	Console::puts("CREATING THREAD 4...");
-	char* stack4 = new char[1024];
-	thread4 = new Thread(fun4, stack4, 1024);
+	char* stack4 = new char[4096];
+	thread4 = new Thread(fun4, stack4, 4096);
 	Console::puts("DONE\n");
 
 #ifdef _USES_SCHEDULER_

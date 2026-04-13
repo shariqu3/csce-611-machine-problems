@@ -22,6 +22,9 @@
 #include "utils.H"
 #include "console.H"
 #include "nonblocking_disk.H"
+#include "thread.H"
+#include "system.H"
+#include "scheduler.H"
 
 /*--------------------------------------------------------------------------*/
 /* CONSTRUCTOR */
@@ -29,28 +32,21 @@
 
 NonBlockingDisk::NonBlockingDisk(unsigned int _size) 
   : SimpleDisk(_size) {
-  n_threads = 0;
-  start = 0;
-  for (int i = 0; i < MAX_THREADS; i++) {
-    disk_q[i] = nullptr;
-  }
+    waiting_thread = nullptr;
+    InterruptHandler::register_handler(14, this);
 }
 
-bool NonBlockingDisk::possible_disk_operation() {
-  if(SimpleDisk::is_busy() && n_threads) {
-    return false;
-  }
-  return true;
+void NonBlockingDisk::wait_while_busy() {
+    while (is_busy()) {
+        waiting_thread = Thread::CurrentThread();
+        System::SCHEDULER->yield();
+    }
 }
 
-void NonBlockingDisk::wait_while_busy(){
-  //1. Add current thread to disk_q
-  if(n_threads==MAX_THREADS)
-  {
-    Console::puts("DISK QUEUE max limit reached.");
-    assert(false);
-  }
-  disk_q[(start+n_threads++)%MAX_THREADS] = Thread::CurrentThread();
-  //2. Then yield  without adding current thread to scheduler queue
-  Thread::SYSTEM_SCHEDULER->yield();
+void NonBlockingDisk::handle_interrupt(REGS * _r) {
+    if (waiting_thread != nullptr) {
+        Thread* t = waiting_thread;
+        waiting_thread = nullptr;
+        System::SCHEDULER->resume(t);
+    }
 }
