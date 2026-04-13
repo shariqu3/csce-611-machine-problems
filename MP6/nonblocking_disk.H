@@ -16,12 +16,13 @@
 /*--------------------------------------------------------------------------*/
 
 /* -- (none) -- */
-
 /*--------------------------------------------------------------------------*/
 /* INCLUDES */
 /*--------------------------------------------------------------------------*/
 
 #include "simple_disk.H"
+class Thread;
+class Scheduler;
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
@@ -34,6 +35,11 @@
 /*--------------------------------------------------------------------------*/
 
 class NonBlockingDisk : public SimpleDisk {
+   const static int MAX_THREADS = 8;
+   static Thread *disk_q[MAX_THREADS];
+   int n_threads;
+   int start;
+
 public:
    NonBlockingDisk(unsigned int _size); 
    /* Creates a NonBlockingDisk device with the given size connected to the 
@@ -41,6 +47,11 @@ public:
       NOTE: We are passing the _size argument out of laziness. 
       In a real system, we would infer this information from the 
       disk controller. */
+   bool virtual possible_disk_operation();
+   void wait_while_busy();
+   /* Returns true if a disk operation is possible at the moment, and false  
+   otherwise. */
+
 
 };
 
