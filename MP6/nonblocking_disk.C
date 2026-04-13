@@ -47,10 +47,15 @@ bool NonBlockingDisk::possible_disk_operation() {
 }
 
 void NonBlockingDisk::wait_while_busy() {
+    bool is_ints_enabled = Machine::interrupts_enabled();
+    Machine::disable_interrupts();
     while (is_busy()) {
         current_disk_thread = Thread::CurrentThread();
+        if (is_ints_enabled) Machine::enable_interrupts();
         System::SCHEDULER->yield();
+        Machine::disable_interrupts();
     }
+    if (is_ints_enabled) Machine::enable_interrupts();
 }
 
 void NonBlockingDisk::read(unsigned long _block_no, unsigned char* _buf) {
