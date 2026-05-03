@@ -77,8 +77,8 @@ private:
 
 	SimpleDisk* disk;
 	unsigned int size;
+	unsigned int n_blocks;
 
-	static constexpr unsigned int MAX_INODES = SimpleDisk::BLOCK_SIZE / sizeof(Inode);
 	/* Just as an example; you can store MAX_INODES in a single INODES block */
 
 	Inode* inodes; 
@@ -97,6 +97,7 @@ private:
 		  blocks. These functions also come useful to class Inode and File. */
 
 public:
+	static constexpr unsigned int MAX_INODES = SimpleDisk::BLOCK_SIZE / sizeof(Inode);
 	FileSystem();
 	/* Just initializes local data structures. Does not connect to disk yet. */
 
