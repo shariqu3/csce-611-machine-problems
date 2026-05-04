@@ -225,8 +225,10 @@ bool FileSystem::DeleteFile(int _file_id) {
        (depending on your implementation of the inode list) the inode. */
     /*
     1. Find inode 
-    2. Mark block as free
-    3. Make inode empty
+    2. Read index block
+    3. Mark all file blocks as free
+    4. Mark index block as free
+    5. Make inode empty
     */
 
     // 1. Find inode 
@@ -237,12 +239,28 @@ bool FileSystem::DeleteFile(int _file_id) {
         assert(false);
     }
 
-    // 2. Mark block as free
-    free_blocks[inode->block_no] = 0;
+    // 2. Read index block
+    int index_block_no = inode->index_block_no;
+    unsigned char * buf = new unsigned char[SimpleDisk::BLOCK_SIZE];
+    disk->read(index_block_no, buf);
 
-    // 3. Make inode empty
-    inode->block_no = -1;
+    // 3. Mark all file blocks as free
+    int *block_lists = (int *)buf;
+    for(unsigned int i=0;i<SimpleDisk::BLOCK_SIZE/sizeof(int);i++)
+    {
+        if(block_lists[i] != -1)
+        {
+            free_blocks[block_lists[i]] = 0;
+        }
+    }
+
+    // 4. Mark index block as free
+    free_blocks[index_block_no] = 0;
+
+    // 5. Make inode empty
+    inode->index_block_no = -1;
     inode->id = -1;
+    inode->size = 0;
     return true;
 }
 
