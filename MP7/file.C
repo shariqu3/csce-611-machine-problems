@@ -97,14 +97,31 @@ int File::Read(unsigned int _n, char *_buf) {
 int File::Write(unsigned int _n, const char *_buf) {
     Console::puts("writing to file\n");
     int n_written = 0;
-    while(n_written <_n && current<SimpleDisk::BLOCK_SIZE)
-    {
-        block_cache[current++] = _buf[n_written++];
+    while(n_written < (int)_n && current_pos < (SimpleDisk::BLOCK_SIZE * n_loaded_blocks)) {
+        int block_idx = current_pos / SimpleDisk::BLOCK_SIZE;
+        int offset = current_pos % SimpleDisk::BLOCK_SIZE;
+
+        // Allocate new block if needed
+        if(index_block_cache[block_idx] == -1) {
+            int new_block = fs->GetFreeBlock();
+            if(new_block == -1) {
+                Console::puts("Disk Space Full!");
+                assert(false);
+            }
+            index_block_cache[block_idx] = new_block;
+            fs->free_blocks[new_block] = 1;
+            file_block_caches[block_idx] = new int[SimpleDisk::BLOCK_SIZE/sizeof(int)];
+        }
+
+        file_block_caches[block_idx][offset] = _buf[n_written++];
+        current_pos++;
+        if(current_pos > inode->size) 
+        {
+            inode->size = current_pos;
+        }
     }
-    if(current !=SimpleDisk::BLOCK_SIZE)
-    {
-        block_cache[current++] = -1;
-    }
+    current_block_idx = current_pos / SimpleDisk::BLOCK_SIZE;
+    current_offset = current_pos % (SimpleDisk::BLOCK_SIZE);
     return n_written;
 }
 
