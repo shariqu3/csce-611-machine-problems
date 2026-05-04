@@ -1,0 +1,14 @@
+Proposed Design: Inodes instead of straighforward pointing to the block, it is allocated a block for storing blocks that will contain a file, a block is of size 512B, 64KB will require 128 blocks the indices to which will be suffciently stored in one block.
+FileSystem modules:
+Mount, constructor, destructor, Format, GetFreeInode, GetFreeBlock, sync_metadata, LookupFile, Inode constructor(block_no points to the block containing list of blocks) won't change
+CreateFile -> will need to allocate and initialize the inode block and first file block and populate index of file file block in the inode block.
+DeleteFile -> will need to go through all the list of blocks in the inode mark them free and then mark the original inode block free.
+File modules:
+Reset and EoF will not have any change.
+Will need to maintain no. of blocks.
+inode_cache will need to be maintained
+block_caches will need to moved to heap, and a list of file blocks will need to be cached.
+constructor:  now will need to read the inode cache and all file caches
+destructor:  now will need to write the inode cache and all file caches
+Read: now will need to maintain current_block (points to block) and current_ptr (points to position inside block) and will need to be incremented accordingly
+Write: now will need to maintain current_block (points to block) and current_ptr (points to position inside block) and will need to be incremented accordingly and new block will need to be allocated if current_ptr reaches at the end or the line for writing end of file reaches the end.
