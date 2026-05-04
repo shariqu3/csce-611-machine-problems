@@ -144,7 +144,8 @@ bool FileSystem::CreateFile(int _file_id) {
     3. Find a free inode
     4. Set file metadata on inode
     5. Mark block as reserved
-    6. Update inode list and freelist on disk
+    6. Rewrite block with first char as end of file(-1);
+    7. Update inode list and freelist on disk
     */
 
     // 1. Lookup if file exists
@@ -177,7 +178,13 @@ bool FileSystem::CreateFile(int _file_id) {
     // 5. Mark block as reserved
     free_blocks[block_no] = 1;
 
-    //6. Update inode list and freelist on disk
+    // 6. Rewrite block with first char as end of file(-1);
+    unsigned char * buf = new unsigned char[SimpleDisk::BLOCK_SIZE];
+    buf[0] = -1;
+    disk->write(block_no, buf);
+    delete[] buf;
+
+    //7. Update inode list and freelist on disk
     sync_metadata();
     return true;
 }
