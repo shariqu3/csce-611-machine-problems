@@ -41,14 +41,14 @@ class Inode
 	friend class FileSystem; // The inode is in an uncomfortable position between
 	friend class File;       // File System and File. We give both full access
 	// to the Inode.
-
+	Inode();	
 private:
 	long id; // File "name"
 	int block_no;	
 	/* You will need additional information in the inode, such as allocation
 	   information. */
 
-	FileSystem* fs; // It may be handy to have a pointer to the File system.
+	//FileSystem* fs; // It may be handy to have a pointer to the File system.
 	// For example when you need a new block or when you want
 	// to load or save the inode list. (Depends on your
 	// implementation.)
@@ -91,8 +91,8 @@ private:
 	   If you reserve one block to store the "free list", you can handle a file system up to
 	   256kB. (Large enough for a proof of concept.) */
 
-	   // short GetFreeInode();
-	   // int GetFreeBlock();
+	   short GetFreeInode();
+	   int GetFreeBlock();
 	   /* It may be helpful to two functions to hand out free inodes in the inode list and free
 		  blocks. These functions also come useful to class Inode and File. */
 	void sync_metadata();

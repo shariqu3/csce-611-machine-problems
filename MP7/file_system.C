@@ -100,16 +100,16 @@ bool FileSystem::Format(SimpleDisk * _disk, unsigned int _size) { // static!
     */
 
     // 1. Overwrite inodes block
-    unsigned char* buf = new unsigned char[SimpleDisk::BLOCK_SIZE/sizeof(unsigned char)];
-    for(unsigned int i=0 ; i < SimpleDisk::BLOCK_SIZE/sizeof(unsigned char) ; i++)
-    { buf[i] = 0; }
-    _disk->write(0, buf);
+    struct Inode* buf = new Inode[MAX_INODES];
+    _disk->write(0, (unsigned char*)buf);
+    delete[] buf;
 
     // 2. Overwrite free_block
-    buf[0] = 1;
-    buf[1] = 1;
-    _disk->write(1, buf);
-    delete[] buf;
+    unsigned char* buf2 = new unsigned char[MAX_INODES];
+    buf2[0] = 1;
+    buf2[1] = 1;
+    _disk->write(1, buf2);
+    delete[] buf2;
     return true;
 }
 
@@ -138,8 +138,48 @@ bool FileSystem::CreateFile(int _file_id) {
     /* Here you check if the file exists already. If so, throw an error.
        Then get yourself a free inode and initialize all the data needed for the
        new file. After this function there will be a new file on disk. */
-    Console::puts("FUNCTION NOT IMPLEMENTED\n");
-    assert(false);
+    /*
+    1. Lookup if file exists
+    2. Find a free block
+    3. Find a free inode
+    4. Set file metadata on inode
+    5. Mark block as reserved
+    6. Update inode list and freelist on disk
+    */
+
+    // 1. Lookup if file exists
+    Inode* ret = LookupFile(_file_id);
+
+    if(ret)
+    {
+        Console::puts("File already exists! File ID:");
+        Console::puti(_file_id);
+        return false;
+    }
+
+    // 2. Find a free block
+    int block_no = GetFreeBlock();
+
+    // 3. Find a free inode 
+    short inode_idx= GetFreeInode();
+
+    if(block_no == -1 || inode_idx== -1)
+    {
+        Console::puts("Disk Space Full!");
+        assert(false);
+    }
+
+    // 4. Set file metadata on inode
+    struct Inode * inode = &inodes[inode_idx];
+    inode->block_no = block_no;
+    inode->id = _file_id;
+
+    // 5. Mark block as reserved
+    free_blocks[block_no] = 1;
+
+    //6. Update inode list and freelist on disk
+    sync_metadata();
+    return true;
 }
 
 bool FileSystem::DeleteFile(int _file_id) {
@@ -149,4 +189,32 @@ bool FileSystem::DeleteFile(int _file_id) {
        (depending on your implementation of the inode list) the inode. */
     Console::puts("FUNCTION NOT IMPLEMENTED\n");
     assert(false);
+}
+
+
+Inode::Inode(){
+    id = -1;
+    block_no=-1;
+}
+
+short FileSystem::GetFreeInode(){
+    for(short int i=0;i<(short)n_blocks;i++)
+    {
+        if(inodes[i].id == -1)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int FileSystem::GetFreeBlock(){
+    for(int i=0;i<n_blocks;i++)
+    {
+        if(free_blocks[i] != 1)
+        {
+            return i;
+        }
+    }
+    return -1;
 }
