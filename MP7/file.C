@@ -127,10 +127,12 @@ int File::Write(unsigned int _n, const char *_buf) {
 
 void File::Reset() {
     Console::puts("resetting file\n");
-    current = 0;
+    current_pos = 0;
+    current_block_idx = 0;
+    current_offset = 0;
 }
 
 bool File::EoF() {
     Console::puts("checking for EoF\n");
-    return (int)block_cache[current] == 255;
+    return current_pos >= inode->size;
 }
