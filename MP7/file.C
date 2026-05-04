@@ -59,7 +59,19 @@ File::~File() {
     Console::puts("Closing file.\n");
     /* Make sure that you write any cached data to disk. */
     /* Also make sure that the inode in the inode list is updated. */
-    fs->disk->write(inode->block_no, block_cache);
+    for(int i = 0; i < n_loaded_blocks; ++i) {
+        if(index_block_cache[i] != -1) {
+            fs->disk->write(index_block_cache[i], file_block_caches[i]);
+        }
+        delete[] file_block_caches[i];
+    }
+    delete[] file_block_caches;
+
+    // Write back index block cache
+    fs->disk->write(inode->index_block_no, (unsigned char*)index_block_cache);
+    delete[] index_block_cache;
+
+    fs->sync_metadata();
 }
 /*--------------------------------------------------------------------------*/
 /* FILE FUNCTIONS */
