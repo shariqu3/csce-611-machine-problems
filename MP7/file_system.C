@@ -42,7 +42,10 @@ FileSystem::FileSystem() {
     // Console::puts("FUNCTION NOT IMPLEMENTED\n");
     // assert(false);
     disk = NULL;
-    inodes = new Inode[MAX_INODES];
+    n_blocks = MAX_INODES;
+    size = n_blocks* SimpleDisk::BLOCK_SIZE;
+    free_blocks = new unsigned char[n_blocks];
+    inodes = new Inode[n_blocks];
 }
 
 FileSystem::~FileSystem() {
@@ -74,18 +77,11 @@ bool FileSystem::Mount(SimpleDisk * _disk) {
 
     // 2. Initialize  disk, n_blocks & size
     disk = _disk;
-    size = MAX_INODES * SimpleDisk::BLOCK_SIZE;
-    n_blocks = MAX_INODES;
 
     // 3. Read to memory inodes and free_blocks
-    free_blocks = new unsigned char[n_blocks];
+    disk->read(0, (unsigned char* )inodes); 
     disk->read(1, free_blocks); 
 
-    unsigned char* buf = new unsigned char[SimpleDisk::BLOCK_SIZE/sizeof(unsigned char)];
-    disk->read(0, buf); 
-    Console::puti(int(free_blocks[0]));
-
-    delete[](buf);
     return true;
 }
 
@@ -104,6 +100,8 @@ bool FileSystem::Format(SimpleDisk * _disk, unsigned int _size) { // static!
 
     // 1. Overwrite inodes block
     unsigned char* buf = new unsigned char[SimpleDisk::BLOCK_SIZE/sizeof(unsigned char)];
+    for(unsigned int i=0 ; i < SimpleDisk::BLOCK_SIZE/sizeof(unsigned char) ; i++)
+    { buf[i] = 0; }
     _disk->write(0, buf);
 
     // 2. Overwrite free_block
