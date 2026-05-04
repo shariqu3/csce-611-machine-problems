@@ -143,9 +143,11 @@ bool FileSystem::CreateFile(int _file_id) {
     2. Find a free block
     3. Find a free inode
     4. Set file metadata on inode
-    5. Mark block as reserved
-    6. Rewrite block with first char as end of file(-1);
-    7. Update inode list and freelist on disk
+    5. Allocate index_block for inode
+    6. Allocate first file block
+    7. Mark the blocks as reserved
+    8. Rewrite block with first char as end of file(-1);
+    9. Update inode list and freelist on disk
     */
 
     // 1. Lookup if file exists
@@ -158,31 +160,58 @@ bool FileSystem::CreateFile(int _file_id) {
         return false;
     }
 
-    // 2. Find a free block
-    int block_no = GetFreeBlock();
+    // 2. Find free blocks & 
+    // 5. Allocate index_block for inode & 
+    // 6. Allocate first file block & 
+    // 7. Mark the blocks as reserved
+    int index_block_no = GetFreeBlock();
+    if(index_block_no == -1)
+    {
+        Console::puts("Disk Space Full!");
+        assert(false);
+    }
+    free_blocks[index_block_no] = 1;
+
+    int file_block_no = GetFreeBlock();
+    if(file_block_no== -1)
+    {
+    free_blocks[index_block_no] = 0;
+        Console::puts("Disk Space Full!");
+        assert(false);
+    }
+    free_blocks[file_block_no] = 1;
 
     // 3. Find a free inode 
     short inode_idx= GetFreeInode();
 
-    if(block_no == -1 || inode_idx== -1)
+    if(inode_idx== -1)
     {
+    free_blocks[index_block_no] = 0;
+    free_blocks[file_block_no] = 0;
         Console::puts("Disk Space Full!");
         assert(false);
     }
 
     // 4. Set file metadata on inode
     struct Inode * inode = &inodes[inode_idx];
-    inode->block_no = block_no;
+    inode->index_block_no = index_block_no;
     inode->id = _file_id;
+    inode->size = 0;
 
-    // 5. Mark block as reserved
-    free_blocks[block_no] = 1;
 
     // 6. Rewrite block with first char as end of file(-1);
     unsigned char * buf = new unsigned char[SimpleDisk::BLOCK_SIZE];
     buf[0] = -1;
-    disk->write(block_no, buf);
+    disk->write(file_block_no, buf);
     delete[] buf;
+
+    int *index_block_buf = new int[SimpleDisk::BLOCK_SIZE/sizeof(int)];
+    for(unsigned int i=0;i<SimpleDisk::BLOCK_SIZE/sizeof(int);i++)
+    {
+        index_block_buf[i] = -1;
+    }
+    disk->write(index_block_no, (unsigned char *)index_block_buf);
+    delete[] index_block_buf;
 
     //7. Update inode list and freelist on disk
     sync_metadata();
@@ -220,7 +249,7 @@ bool FileSystem::DeleteFile(int _file_id) {
 
 Inode::Inode(){
     id = -1;
-    block_no=-1;
+    index_block_no=-1;
 }
 
 short FileSystem::GetFreeInode(){

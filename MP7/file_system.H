@@ -44,7 +44,7 @@ class Inode
 	Inode();	
 private:
 	long id; // File "name"
-	int block_no;	
+	int index_block_no;	
 	/* You will need additional information in the inode, such as allocation
 	   information. */
 
