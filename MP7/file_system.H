@@ -71,6 +71,7 @@ class FileSystem
 {
 
 	friend class Inode;
+	friend class File;
 
 private:
 	/* -- DEFINE YOUR FILE SYSTEM DATA STRUCTURES HERE. */

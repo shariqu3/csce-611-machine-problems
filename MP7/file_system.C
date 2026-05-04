@@ -179,8 +179,16 @@ bool FileSystem::CreateFile(int _file_id) {
     free_blocks[block_no] = 1;
 
     // 6. Rewrite block with first char as end of file(-1);
+    Console::puts("Creating file: ");
+    Console::puti(_file_id);
+    Console::puts("\n");
+    Console::puts("Creating block no: ");
+    Console::puti(block_no);
+    Console::puts("\n");
     unsigned char * buf = new unsigned char[SimpleDisk::BLOCK_SIZE];
     buf[0] = -1;
+    Console::puts("Writing end of file: ");
+    Console::puti((int)buf[0]);
     disk->write(block_no, buf);
     delete[] buf;
 

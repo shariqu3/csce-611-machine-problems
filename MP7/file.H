@@ -44,7 +44,9 @@ class File  {
     
 private:
     /* -- your file data structures here ... */
-    
+   int current; 
+   Inode *inode;
+   FileSystem *fs;
     /* You will need a reference to the inode, maybe even a reference to the 
        file system. 
        You may also want a current position, which indicates which position in 
