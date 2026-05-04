@@ -37,10 +37,10 @@
 /* CONSTRUCTOR */
 /*--------------------------------------------------------------------------*/
 
-FileSystem::FileSystem() {
+FileSystem::FileSystem(unsigned int _size) {
     // Console::puts("In file system constructor.\n");
     disk = NULL;
-    n_blocks = MAX_INODES;
+    n_blocks = _size / SimpleDisk::BLOCK_SIZE;
     size = n_blocks* SimpleDisk::BLOCK_SIZE;
     free_blocks = new unsigned char[n_blocks];
     inodes = new Inode[n_blocks];
@@ -210,6 +210,7 @@ bool FileSystem::CreateFile(int _file_id) {
     {
         index_block_buf[i] = -1;
     }
+    index_block_buf[0] = file_block_no;
     disk->write(index_block_no, (unsigned char *)index_block_buf);
     delete[] index_block_buf;
 

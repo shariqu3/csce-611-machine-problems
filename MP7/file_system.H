@@ -45,6 +45,7 @@ class Inode
 private:
 	long id; // File "name"
 	int index_block_no;	
+	int size = 0;
 	/* You will need additional information in the inode, such as allocation
 	   information. */
 
@@ -100,7 +101,7 @@ private:
 
 public:
 	static constexpr unsigned int MAX_INODES = SimpleDisk::BLOCK_SIZE / sizeof(Inode);
-	FileSystem();
+	FileSystem(unsigned int _size);
 	/* Just initializes local data structures. Does not connect to disk yet. */
 
 	~FileSystem();

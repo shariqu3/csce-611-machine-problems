@@ -19,6 +19,7 @@
 
 #define MB * (0x1 << 20)
 #define KB * (0x1 << 10)
+#define FS_SIZE (1 MB)
 
 /*--------------------------------------------------------------------------*/
 /* INCLUDES */
@@ -99,87 +100,149 @@ FileSystem* FILE_SYSTEM;
 /*--------------------------------------------------------------------------*/
 /* CODE TO EXERCISE THE FILE SYSTEM */
 /*--------------------------------------------------------------------------*/
+void exercise_file_system(FileSystem* _file_system, unsigned int _iteration_no, unsigned int file_size=64 KB) {
 
-void exercise_file_system(FileSystem* _file_system, unsigned int _iteration_no) {
+    char* buf1 = new char[file_size];
+    char* buf2 = new char[file_size];
 
-	const char* STRING1 = "01234567890123456789";
-	const char* STRING2 = "abcdefghijabcdefghij";
+    // Fill buffers with patterns
+    for (unsigned int i = 0; i < file_size; ++i) {
+        buf1[i] = (char)((_iteration_no + i) % 256); // pattern 1
+        buf2[i] = (char)((_iteration_no + 128 + i) % 256); // pattern 2
+    }
 
-	/* -- Create two files -- */
+    Console::puts("Creating File 1 and File 2\n");
+    assert(_file_system->CreateFile(1));
+    assert(_file_system->CreateFile(2));
 
-	Console::puts("Creating File 1 and File 2\n");
+    {
+        Console::puts("Opening File 1 and File 2\n");
+        File file1(_file_system, 1);
+        File file2(_file_system, 2);
 
-	assert(_file_system->CreateFile(1));
-	assert(_file_system->CreateFile(2));
+        Console::puts("Writing into File 1 and File 2\n");
+        assert(file1.Write(file_size, buf1) == (int)file_size);
+        assert(file2.Write(file_size, buf2) == (int)file_size);
 
-	/* -- "Open" the two files -- */
+        Console::puts("Closing File 1 and File 2\n");
+    }
 
-	{
-		Console::puts("Opening File 1 and File 2\n");
+    {
+        Console::puts("Opening File 1 and File 2 again\n");
+        File file1(_file_system, 1);
+        File file2(_file_system, 2);
 
-		File file1(_file_system, 1);
+        Console::puts("Checking content of File 1 and File 2\n");
 
-		File file2(_file_system, 2);
+        file1.Reset();
+        char* result1 = new char[file_size];
+        assert(file1.Read(file_size, result1) == (int)file_size);
+        for (unsigned int i = 0; i < file_size; i++) {
+            assert(result1[i] == buf1[i]);
+        }
+        delete[] result1;
 
-		Console::puts("Writing into File 1 and File 2\n");
+        file2.Reset();
+        char* result2 = new char[file_size];
+        assert(file2.Read(file_size, result2) == (int)file_size);
+        for (unsigned int i = 0; i < file_size; i++) {
+            assert(result2[i] == buf2[i]);
+        }
+        delete[] result2;
 
-		/* -- Write into File 1 -- */
-		file1.Write(20, (_iteration_no % 2 == 0) ? STRING1 : STRING2);
+        Console::puts("SUCCESS!!\n");
+        Console::puts("Closing File 1 and File 2 again\n");
+    }
 
-		/* -- Write into File 2 -- */
+    Console::puts("Deleting File 1 and File 2\n");
+    assert(_file_system->DeleteFile(1));
+    assert(_file_system->LookupFile(1) == nullptr);
+    assert(_file_system->DeleteFile(2));
+    assert(_file_system->LookupFile(2) == nullptr);
 
-		file2.Write(20, (_iteration_no % 2 == 0) ? STRING2 : STRING1);
-
-		/* -- Files will get automatically closed when we leave scope  -- */
-
-		Console::puts("Closing File 1 and File 2\n");
-	}
-
-	{
-		/* -- "Open files again -- */
-
-		Console::puts("Opening File 1 and File 2 again\n");
-
-		File file1(_file_system, 1);
-		File file2(_file_system, 2);
-
-		/* -- Read from File 1 and check result -- */
-
-		Console::puts("Checking content of File 1 and File 2\n");
-
-		file1.Reset();
-		char result1[30];
-		assert(file1.Read(20, result1) == 20);
-		for (int i = 0; i < 20; i++) {
-			assert(result1[i] == ((_iteration_no % 2 == 0) ? STRING1[i] : STRING2[i]));
-		}
-
-		/* -- Read from File 2 and check result -- */
-		file2.Reset();
-		char result2[30];
-		assert(file2.Read(20, result2) == 20);
-		for (int i = 0; i < 20; i++) {
-			assert(result2[i] == ((_iteration_no % 2 == 0) ? STRING2[i] : STRING1[i]));
-		}
-		Console::puts("SUCCESS!!\n");
-
-		/* -- "Close" files again -- */
-
-		Console::puts("Closing File 1 and File 2 again\n");
-	}
-
-	/* -- Delete both files -- */
-
-	Console::puts("Deleting File 1 and File 2\n");
-
-	assert(_file_system->DeleteFile(1));
-
-	assert(_file_system->LookupFile(1) == nullptr);
-
-	assert(_file_system->DeleteFile(2));
-
-	assert(_file_system->LookupFile(2) == nullptr);
+    delete[] buf1;
+    delete[] buf2;
 }
+// void exercise_file_system(FileSystem* _file_system, unsigned int _iteration_no) {
+
+// 	const char* STRING1 = "01234567890123456789";
+// 	const char* STRING2 = "abcdefghijabcdefghij";
+
+// 	/* -- Create two files -- */
+
+// 	Console::puts("Creating File 1 and File 2\n");
+
+// 	assert(_file_system->CreateFile(1));
+// 	assert(_file_system->CreateFile(2));
+
+// 	/* -- "Open" the two files -- */
+
+// 	{
+// 		Console::puts("Opening File 1 and File 2\n");
+
+// 		File file1(_file_system, 1);
+
+// 		File file2(_file_system, 2);
+
+// 		Console::puts("Writing into File 1 and File 2\n");
+
+// 		/* -- Write into File 1 -- */
+// 		file1.Write(20, (_iteration_no % 2 == 0) ? STRING1 : STRING2);
+
+// 		/* -- Write into File 2 -- */
+
+// 		file2.Write(20, (_iteration_no % 2 == 0) ? STRING2 : STRING1);
+
+// 		/* -- Files will get automatically closed when we leave scope  -- */
+
+// 		Console::puts("Closing File 1 and File 2\n");
+// 	}
+
+// 	{
+// 		/* -- "Open files again -- */
+
+// 		Console::puts("Opening File 1 and File 2 again\n");
+
+// 		File file1(_file_system, 1);
+// 		File file2(_file_system, 2);
+
+// 		/* -- Read from File 1 and check result -- */
+
+// 		Console::puts("Checking content of File 1 and File 2\n");
+
+// 		file1.Reset();
+// 		char result1[30];
+// 		assert(file1.Read(20, result1) == 20);
+// 		for (int i = 0; i < 20; i++) {
+// 			assert(result1[i] == ((_iteration_no % 2 == 0) ? STRING1[i] : STRING2[i]));
+// 		}
+
+// 		/* -- Read from File 2 and check result -- */
+// 		file2.Reset();
+// 		char result2[30];
+// 		assert(file2.Read(20, result2) == 20);
+// 		for (int i = 0; i < 20; i++) {
+// 			assert(result2[i] == ((_iteration_no % 2 == 0) ? STRING2[i] : STRING1[i]));
+// 		}
+// 		Console::puts("SUCCESS!!\n");
+
+// 		/* -- "Close" files again -- */
+
+// 		Console::puts("Closing File 1 and File 2 again\n");
+// 	}
+
+// 	/* -- Delete both files -- */
+
+// 	Console::puts("Deleting File 1 and File 2\n");
+
+// 	assert(_file_system->DeleteFile(1));
+
+// 	assert(_file_system->LookupFile(1) == nullptr);
+
+// 	assert(_file_system->DeleteFile(2));
+
+// 	assert(_file_system->LookupFile(2) == nullptr);
+// }
 
 /*--------------------------------------------------------------------------*/
 /* MAIN ENTRY INTO THE OS */
@@ -248,7 +311,7 @@ int main() {
 
 	/* -- FILE SYSTEM -- */
 
-	FILE_SYSTEM = new FileSystem();
+	FILE_SYSTEM = new FileSystem(FS_SIZE);
 
 	/* NOTE: The timer chip starts periodically firing as
 			 soon as we enable interrupts.
@@ -266,7 +329,7 @@ int main() {
 	/* -- HERE WE STRESS TEST THE FILE SYSTEM -- */
 
 	Console::puts("before formatting...");
-	assert(FileSystem::Format(SYSTEM_DISK, (1 MB))); // Don't try this at home!
+	assert(FileSystem::Format(SYSTEM_DISK, FS_SIZE)); // Don't try this at home!
 	Console::puts("formatting completed\n");
 
 	Console::puts("before mounting...");
