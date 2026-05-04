@@ -28,7 +28,7 @@
 
 File::File(FileSystem *_fs, int _id) {
     Console::puts("Opening file.\n");
-    current = 0;
+    current_pos = 0;
     fs = _fs;
     inode = fs->LookupFile(_id);
     if(inode == NULL)
@@ -96,6 +96,7 @@ int File::Read(unsigned int _n, char *_buf) {
 
 int File::Write(unsigned int _n, const char *_buf) {
     Console::puts("writing to file\n");
+    int old_size = inode->size;
     int n_written = 0;
     while(n_written < (int)_n && current_pos < (SimpleDisk::BLOCK_SIZE * n_loaded_blocks)) {
         int block_idx = current_pos / SimpleDisk::BLOCK_SIZE;
@@ -110,7 +111,7 @@ int File::Write(unsigned int _n, const char *_buf) {
             }
             index_block_cache[block_idx] = new_block;
             fs->free_blocks[new_block] = 1;
-            file_block_caches[block_idx] = new int[SimpleDisk::BLOCK_SIZE/sizeof(int)];
+            file_block_caches[block_idx] = new unsigned char[SimpleDisk::BLOCK_SIZE];
         }
 
         file_block_caches[block_idx][offset] = _buf[n_written++];
@@ -122,7 +123,15 @@ int File::Write(unsigned int _n, const char *_buf) {
     }
     current_block_idx = current_pos / SimpleDisk::BLOCK_SIZE;
     current_offset = current_pos % (SimpleDisk::BLOCK_SIZE);
+    if (inode->size < old_size) {
+        int eof_block = inode->size / SimpleDisk::BLOCK_SIZE;
+        int eof_offset = inode->size % SimpleDisk::BLOCK_SIZE;
+        if (eof_block < n_loaded_blocks) {
+            file_block_caches[eof_block][eof_offset] = (unsigned char)0xFF; // EOF marker
+        }
+    }
     return n_written;
+
 }
 
 void File::Reset() {
