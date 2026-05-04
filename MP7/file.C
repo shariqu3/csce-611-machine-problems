@@ -36,7 +36,23 @@ File::File(FileSystem *_fs, int _id) {
         Console::puts("File Not Found!");
         assert(false);
     }
-    fs->disk->read(inode->block_no, block_cache);
+    // Reading the index block to cache
+    index_block_cache = new int[SimpleDisk::BLOCK_SIZE/sizeof(int)];
+    fs->disk->read(inode->index_block_no, (unsigned char *)index_block_cache);
+
+    // Reading all file blocks to cache
+    file_block_caches = new unsigned char*[SimpleDisk::BLOCK_SIZE / sizeof(int)];
+    n_loaded_blocks = SimpleDisk::BLOCK_SIZE / sizeof(int);
+    for(int i = 0; i < n_loaded_blocks; ++i){
+        file_block_caches[i] = new unsigned char[SimpleDisk::BLOCK_SIZE];
+        if(index_block_cache[i] != -1) {
+            fs->disk->read(index_block_cache[i], file_block_caches[i]);
+        }
+    }
+
+    current_pos = 0;
+    current_block_idx = 0;
+    current_offset = 0;
 }
 
 File::~File() {

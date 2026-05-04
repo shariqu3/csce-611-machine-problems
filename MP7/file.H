@@ -44,7 +44,9 @@ class File  {
     
 private:
     /* -- your file data structures here ... */
-   int current; 
+   int current_pos; 
+   int current_block_idx; 
+   int current_offset;
    Inode *inode;
    FileSystem *fs;
     /* You will need a reference to the inode, maybe even a reference to the 
@@ -52,7 +54,10 @@ private:
        You may also want a current position, which indicates which position in 
        the file you will read or write next. */
     
-    unsigned char block_cache[SimpleDisk::BLOCK_SIZE];
+   int * index_block_cache;
+   unsigned char ** file_block_caches;
+   int n_loaded_blocks;
+
     /* It will be helpful to have a cached copy of the block that you are reading
        from and writing to. In the base submission, files have only one block, which
        you can cache here. You read the data from disk to cache whenever you open the
