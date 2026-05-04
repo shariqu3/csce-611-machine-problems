@@ -130,7 +130,7 @@ Inode * FileSystem::LookupFile(int _file_id) {
             return inode;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 bool FileSystem::CreateFile(int _file_id) {
@@ -179,16 +179,8 @@ bool FileSystem::CreateFile(int _file_id) {
     free_blocks[block_no] = 1;
 
     // 6. Rewrite block with first char as end of file(-1);
-    Console::puts("Creating file: ");
-    Console::puti(_file_id);
-    Console::puts("\n");
-    Console::puts("Creating block no: ");
-    Console::puti(block_no);
-    Console::puts("\n");
     unsigned char * buf = new unsigned char[SimpleDisk::BLOCK_SIZE];
     buf[0] = -1;
-    Console::puts("Writing end of file: ");
-    Console::puti((int)buf[0]);
     disk->write(block_no, buf);
     delete[] buf;
 
@@ -202,8 +194,27 @@ bool FileSystem::DeleteFile(int _file_id) {
     /* First, check if the file exists. If not, throw an error. 
        Then free all blocks that belong to the file and delete/invalidate 
        (depending on your implementation of the inode list) the inode. */
-    Console::puts("FUNCTION NOT IMPLEMENTED\n");
-    assert(false);
+    /*
+    1. Find inode 
+    2. Mark block as free
+    3. Make inode empty
+    */
+
+    // 1. Find inode 
+    Inode *inode= LookupFile(_file_id); 
+    if(inode==nullptr)
+    {
+        Console::puts("File does not exist!");
+        assert(false);
+    }
+
+    // 2. Mark block as free
+    free_blocks[inode->block_no] = 0;
+
+    // 3. Make inode empty
+    inode->block_no = -1;
+    inode->id = -1;
+    return true;
 }
 
 
