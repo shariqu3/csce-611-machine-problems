@@ -95,6 +95,7 @@ private:
 	   // int GetFreeBlock();
 	   /* It may be helpful to two functions to hand out free inodes in the inode list and free
 		  blocks. These functions also come useful to class Inode and File. */
+	void sync_metadata();
 
 public:
 	static constexpr unsigned int MAX_INODES = SimpleDisk::BLOCK_SIZE / sizeof(Inode);
@@ -110,6 +111,7 @@ public:
 
 	static bool Format(SimpleDisk* _disk, unsigned int _size);
 	/* Wipes any file system from the disk and installs an empty file system of given size. */
+
 
 	Inode* LookupFile(int _file_id);
 	/* Find file with given id in file system. If found, return its inode.

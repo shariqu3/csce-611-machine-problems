@@ -112,6 +112,12 @@ bool FileSystem::Format(SimpleDisk * _disk, unsigned int _size) { // static!
     return true;
 }
 
+void FileSystem::sync_metadata()
+{
+    disk->write(0, (unsigned char *) inodes);
+    disk->write(1, free_blocks);
+}
+
 Inode * FileSystem::LookupFile(int _file_id) {
     Console::puts("looking up file with id = "); Console::puti(_file_id); Console::puts("\n");
     /* Here you go through the inode list to find the file. */
