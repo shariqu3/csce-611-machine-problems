@@ -80,10 +80,17 @@ File::~File() {
 int File::Read(unsigned int _n, char *_buf) {
     Console::puts("reading from file\n");
     int n_read = 0;
-    while(!EoF() && current<SimpleDisk::BLOCK_SIZE)
-    {
-        _buf[n_read++] = block_cache[current++];
+    while(n_read < (int)_n && current_pos < inode->size) {
+        int block_idx = current_pos / SimpleDisk::BLOCK_SIZE;
+        int offset = current_pos % SimpleDisk::BLOCK_SIZE;
+        if(index_block_cache[block_idx] == -1) 
+        { break; }
+
+        _buf[n_read++] = file_block_caches[block_idx][offset];
+        ++current_pos;
     }
+    current_block_idx = current_pos / SimpleDisk::BLOCK_SIZE;
+    current_offset = current_pos % SimpleDisk::BLOCK_SIZE;
     return n_read;
 }
 
