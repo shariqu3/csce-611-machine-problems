@@ -39,8 +39,6 @@
 
 FileSystem::FileSystem() {
     // Console::puts("In file system constructor.\n");
-    // Console::puts("FUNCTION NOT IMPLEMENTED\n");
-    // assert(false);
     disk = NULL;
     n_blocks = MAX_INODES;
     size = n_blocks* SimpleDisk::BLOCK_SIZE;
@@ -51,8 +49,9 @@ FileSystem::FileSystem() {
 FileSystem::~FileSystem() {
     Console::puts("unmounting file system\n");
     /* Make sure that the inode list and the free list are saved. */
-    Console::puts("FUNCTION NOT IMPLEMENTED\n");
-    assert(false);
+    sync_metadata();
+    delete[] free_blocks;
+    delete[] inodes;
 }
 
 
@@ -80,7 +79,11 @@ bool FileSystem::Mount(SimpleDisk * _disk) {
 
     // 3. Read to memory inodes and free_blocks
     disk->read(0, (unsigned char* )inodes); 
-    disk->read(1, free_blocks); 
+
+    unsigned char* buf = new unsigned char[SimpleDisk::BLOCK_SIZE/sizeof(unsigned char)];
+    disk->read(1, buf); 
+    for(unsigned int i=0;i<n_blocks;i++)
+        {free_blocks[i] = buf[i];}
 
     return true;
 }
@@ -91,8 +94,6 @@ bool FileSystem::Format(SimpleDisk * _disk, unsigned int _size) { // static!
     /* Here you populate the disk with an initialized (probably empty) inode list
        and a free list. Make sure that blocks used for the inodes and for the free list
        are marked as used, otherwise they may get overwritten. */
-    // Console::puts("FUNCTION NOT IMPLEMENTED\n");
-    // assert(false);
     /*
     1. Overwrite inodes block
     2. Overwrite free_block
@@ -121,8 +122,15 @@ void FileSystem::sync_metadata()
 Inode * FileSystem::LookupFile(int _file_id) {
     Console::puts("looking up file with id = "); Console::puti(_file_id); Console::puts("\n");
     /* Here you go through the inode list to find the file. */
-    Console::puts("FUNCTION NOT IMPLEMENTED\n");
-    assert(false);
+    for(unsigned int i=0;i<n_blocks;i++)
+    {
+        Inode * inode = &inodes[i];
+        if(inode->id == _file_id)
+        {
+            return inode;
+        }
+    }
+    return NULL;
 }
 
 bool FileSystem::CreateFile(int _file_id) {
